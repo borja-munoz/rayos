@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+*.tga
+*.3DS
+*.txt
