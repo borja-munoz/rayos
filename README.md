@@ -11,6 +11,8 @@ The build process generates an executable called "rayos" in the "bin" folder. Th
 - Tracing Algorithm
   - w: Turner Whitted Raytracer
   - s: Stochastic Raytracer
+- Number of sample rays (ignored if Whitted raytracer is used)
+- Number of shadow rays (ignored if Whitted raytracer is used)
 
 The program instantiates a `Scene` and the calls the raytracer `trace` method passing the scene as the parameter.
 
@@ -78,3 +80,13 @@ A `Camera` is defined using the following parameters:
 - `pixelWidth`, `pixelHeight`. Pixel dimensions
 
 There is a `getEyeRay` method for getting an eye ray for non-stochastic algorithms and a `getSampleEyeRays` method for stochastic algorithms.
+
+## ToDo
+
+- [ ] Include the light as a visible object (white)
+- [ ] Improve performance using a space partitioning technique like Bounding Volume Hierarchies
+- [ ] Read the scene data from glTF format using https://github.com/syoyo/tinygltf 
+- [ ] Read the scene data from PBRT format using https://github.com/ingowald/pbrt-parser
+- [ ] Implement Blinn BRDF
+- [ ] Implement indirect lighting for the `StochasticRayTracer`
+
