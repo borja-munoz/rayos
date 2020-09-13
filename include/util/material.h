@@ -9,6 +9,7 @@ class Material
   real ka;                  // Ambient
   real kd;                  // Diffuse
   real ks;                  // Specular
+  real ke;                  // Emissive (for light sources)
   
  public:
  
@@ -19,7 +20,8 @@ class Material
   real getKa(void);
   real getKd(void);
   real getKs(void);
-  void set(real *color, real ka, real kd, real ks);
+  real getKe(void);
+  void set(real *color, real ka, real kd, real ks, real ke);
 };
 
 

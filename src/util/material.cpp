@@ -11,6 +11,7 @@ Material::Material()
 	this->ka = 1.0;
 	this->kd = 0.5; 
 	this->ks = 0.5;
+    this->ke = 0.0;
 }
 
 
@@ -23,6 +24,7 @@ Material::Material(const Material &m)
 	this->ka = m.ka;
 	this->kd = m.kd;
 	this->ks = m.ks;
+    this->ke = m.ke;
 }
 
 
@@ -71,7 +73,14 @@ real Material::getKs(void)
 
 //-----------------------------------------------
 
-void Material::set(real *color, real ka, real kd, real ks)
+real Material::getKe(void)
+{
+  return(this->ke);
+}
+
+//-----------------------------------------------
+
+void Material::set(real *color, real ka, real kd, real ks, real ke)
 {
   for (int i = 0; i < 3; i++)
     this->color[i] = color[i];
@@ -79,6 +88,7 @@ void Material::set(real *color, real ka, real kd, real ks)
   this->ka = ka;
   this->kd = kd;
   this->ks = ks;
+  this->ke = ke;
 }
 
 
