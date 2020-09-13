@@ -8,7 +8,7 @@
 Scene::Scene()
 {
 	Point3D *a, *b, *c, *d;
-	Quad *aLight;
+	Quad *lightObject;
 
 	this->camera = new Camera();
 
@@ -22,23 +22,32 @@ Scene::Scene()
 	b = new Point3D(-0.5, 0.0, 3.00);
 	c = new Point3D(0.5, 0.0, 3.00);
 	d = new Point3D(0.5, 0.0, 3.00);*/
-	this->light = new vector<Light *>;
+
+    // Lights
+    this->light = new vector<Light *>;
+
+    // Light object
+    Material *mat = new Material();
+	real *colorMat = new real[3];
+	colorMat[0] = 1.0f;  colorMat[1] = 1.0f;  colorMat[2] = 1.0f;
+	mat->set(colorMat, 1.0, 1.0, 0.0, 1.0);
+	lightObject = new Quad(a, b, c, d, mat);  // Defaults to white color
+
+    // Light source
 	RectLight *lightTecho = new RectLight();
-	aLight = new Quad(a, b, c, d);  // Defaults to white color
-	lightTecho->setLocation(aLight);
+	lightTecho->setLocation(lightObject);
 	this->light->push_back(lightTecho);
 
 	// Objects (including lights)
 	this->object = new vector<Primitive *>;
 
-	this->object->push_back(aLight);
+	this->object->push_back(lightObject);
 
 	// Sphere
 	Point3D *center = new Point3D(0, 0, -3.0);
-	Material *mat = new Material();
-	real *colorMat = new real[3];
+    mat = new Material();
 	colorMat[0] = 1.0f;  colorMat[1] = 0.2f;  colorMat[2] = 1.0f;
-	mat->set(colorMat, 1.0, 0.5, 0.5);
+	mat->set(colorMat, 1.0, 0.5, 0.5, 0.0);
 	this->object->push_back(new Sphere(center, 0.5, mat));
 
 	// Tri�ngle
@@ -64,7 +73,7 @@ Scene::Scene()
 	d = new Point3D(-2.0, 2.0, -2.0);
 	mat = new Material();
 	colorMat[0] = 1.0f;  colorMat[1] = 0.2f;  colorMat[2] = 0.2f;
-	mat->set(colorMat, 1.0, 0.5, 0.5);
+	mat->set(colorMat, 1.0, 0.5, 0.5, 0.0);
 	//t = (new Quad(a, b, c, d, mat))->tessellate();
 	//this->object->push_back((*t)[0]);
 	//this->object->push_back((*t)[1]);
@@ -77,7 +86,7 @@ Scene::Scene()
 	d = new Point3D(-2.0, 2.0, -4.0);
 	mat = new Material();
 	colorMat[0] = 0.1f;  colorMat[1] = 0.8f;  colorMat[2] = 0.1f;
-	mat->set(colorMat, 1.0, 0.5, 0.5);
+	mat->set(colorMat, 1.0, 0.5, 0.5, 0.0);
 	this->object->push_back(new Quad(a, b, c, d, mat));
 
 	// Right wall
@@ -87,7 +96,7 @@ Scene::Scene()
 	d = new Point3D(2.0, 2.0, -4.0);
 	mat = new Material();
 	colorMat[0] = 0.2f;  colorMat[1] = 0.2f;  colorMat[2] = 1.0f;
-	mat->set(colorMat, 1.0, 0.5, 0.5);
+	mat->set(colorMat, 1.0, 0.5, 0.5, 0.0);
 	this->object->push_back(new Quad(a, b, c, d, mat));
 
 	// Ceiling
@@ -97,7 +106,7 @@ Scene::Scene()
 	d = new Point3D(2.0, 2.0, -2.0);
 	mat = new Material();
 	colorMat[0] = 1.0f;  colorMat[1] = 1.0f;  colorMat[2] = 1.0f;
-	mat->set(colorMat, 1.0, 0.5, 0.5);
+	mat->set(colorMat, 1.0, 0.5, 0.5, 0.0);
 	this->object->push_back(new Quad(a, b, c, d, mat));
 
 	// Floor
@@ -107,7 +116,7 @@ Scene::Scene()
 	d = new Point3D(-2.0, -2.0, -4.0);
 	mat = new Material();
 	colorMat[0] = 0.2f;  colorMat[1] = 1.0f;  colorMat[2] = 0.2f;
-	mat->set(colorMat, 1.0, 0.5, 0.5);
+	mat->set(colorMat, 1.0, 0.5, 0.5, 0.0);
 	this->object->push_back(new Quad(a, b, c, d, mat));
 		  
 }
