@@ -20,64 +20,76 @@
 
 //-----------------------------------------------
 
+std::string getFilename(char *argv[])
+{
+    auto time = std::time(nullptr);
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&time), "%F_%T"); // ISO 8601 without timezone information.
+    auto strCurrentTime = ss.str();
+    std::replace(strCurrentTime.begin(), strCurrentTime.end(), ':', '-');
+
+    std::stringstream filename;
+    filename << "output/" << argv[1] << "-" << argv[2] << "-" << argv[3] << "-" << strCurrentTime.c_str() << ".tga";
+
+    return(filename.str());
+}
+
+//-----------------------------------------------
+
 int main(int argc, char *argv[])
 {
 	Scene *e;
 	Bitmap *im;
 	Tracer *rt;
 
-//	File3ds *f = new File3ds("knot.3ds");
+    // File3ds *f = new File3ds("knot.3ds");
 
 	if (argc == 4)
 	{
-		// Iniciar cron�metro 
+		// Start chrono 
 		Chrono *c = new Chrono();	
 		c->start();
 
 		// Crear scene
 		e = new Scene();
 
-		// Crear imagen 
-
+		// Instantiate raytracer 
 		if (!strcmp(argv[1], "w"))
 		{
 			// Whitted RayTracer
-			//WhittedRayTracer *wrt;
 			rt = new WhittedRayTracer(PHONG);
-			//wrt = new WhittedRayTracer();
-			//im = wrt->trace(new Scene());
 		}
 		else
 		{
 			// Stochastic RayTracer
-			//StochasticRayTracer *srt;
-			//srt = new StochasticRayTracer();
 			rt = new StochasticRayTracer(atoi(argv[2]), atoi(argv[3]));
 		}
 
+        // Raytrace the scene to create an image
 		im = rt->trace(e);
 
+        // Stop chrono
 		c->stop();
 		cout << "Elapsed time = " << c->value() << " seconds\n";
 		delete(c);
 
-		/*std::stringstream nombreFichero;
-		std::time_t fechaActual = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-		const char *formatoFecha = "%Y-%m-%d";
-		std::stringstream fecha;
-		fecha = std::put_time(fechaActual, formatoFecha);
-		nombreFichero << "imagen" << fecha << ".tga";
-		im->writeTGA(nombreFichero.str());  */
-		im->writeTGA("imagen.tga");  
+        // Write the image to a file
+		const char *filename = getFilename(argv).c_str();
+		im->writeTGA(filename);  
+		//im->writeTGA("imagen.tga");  
 
 		delete(e);
 		delete(im);
 
+        std::stringstream openFileCommand;
+
 		// Windows
-		//system("start imagen.tga");	
+        // openFileCommand << "start " << filename;       
 		
 		// Mac OS X
-		system("open imagen.tga");	
+        openFileCommand << "open " << filename; 
+
+		system(openFileCommand.str().c_str());	
 	}
 	else
 		cout << endl << "Usage: rayos [w|s] <sampleRays> <shadowRays>" << endl;
