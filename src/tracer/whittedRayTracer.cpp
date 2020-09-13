@@ -1,5 +1,5 @@
 #include "whittedRayTracer.h"
-
+#include <iostream>
 
 WhittedRayTracer::WhittedRayTracer()
 {
@@ -77,15 +77,23 @@ real * WhittedRayTracer::traceRay(Ray *r, Scene *e)
     // in the viewer direction using the nearest object BRDF
 	if (nearest != -1)
 	{
-		// Vector to light source
-		L = light1->getSamplePoint()->substract(hitPoint);
-		L->normalize();
+        if (nearest == 0)
+        {
+            // First element in the scene is the light source
+            radiance[0] = radiance[1] = radiance[2] = 1;
+        }
+		else
+        {
+            // Vector to light source
+            L = light1->getSamplePoint()->substract(hitPoint);
+            L->normalize();
 
-		// Vector to viewer
-		V = e->getCamera()->getLocation()->substract(hitPoint);
-		V->normalize();
+            // Vector to viewer
+            V = e->getCamera()->getLocation()->substract(hitPoint);
+            V->normalize();
 
-		radiance = this->BRDF(e->getObject(nearest)->getMaterial(), *N[nearest], L, V);	  
+            radiance = this->BRDF(e->getObject(nearest)->getMaterial(), *N[nearest], L, V);	  
+        }
 	}
 	else
 		radiance[0] = radiance[1] = radiance[2] = 0;
