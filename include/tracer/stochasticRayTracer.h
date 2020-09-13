@@ -15,10 +15,11 @@ class StochasticRayTracer : public Tracer
 	unsigned int shadowRays;					 // Number of shadow rays
 	unsigned int indirectRays;                   // Number of indirect rays
 
-	real *traceRay(Ray *r, Scene *e, real *probLight, Point3D *viewer);
+	real *traceRay(Ray *r, Scene *s, real *probLight, Point3D *viewer);
 	real *calculateRadiance(HitPoint *h, Vector3D *dir, Scene *e, real *probLight);
-	real *directLighting(Scene *e, HitPoint *h, real *probLight, Vector3D *dir);
-	real *indirectLighting(Scene *e, HitPoint *h, real *probLight);
+	real *emittedRadiance(Scene *s, HitPoint *h);
+	real *directLighting(Scene *s, HitPoint *h, real *probLight, Vector3D *dir);
+	real *indirectLighting(Scene *s, HitPoint *h, real *probLight);
 	Vector3D *getRandomDirection(void);
 
   public:

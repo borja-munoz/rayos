@@ -1,4 +1,5 @@
 #include "stochasticRayTracer.h"
+#include "util/chrono.h"
 
 StochasticRayTracer::StochasticRayTracer()
 {
@@ -55,6 +56,9 @@ Bitmap * StochasticRayTracer::trace(Scene *e)
 	{
 		for (unsigned int j = 0; j < rx; j++)
 		{
+            Chrono *c = new Chrono();
+            c->start();
+
 			// We send several rays for each pixel to reduce 
             // aliasing and improve image quality
 			radiance[0] = radiance[1] = radiance[2] = 0;
@@ -86,6 +90,9 @@ Bitmap * StochasticRayTracer::trace(Scene *e)
 
 			im->setHDRPixel(i, j, radiance[0], radiance[1], radiance[2]);
 
+            c->stop();
+        	//cout << "\nPixel elapsed time = " << c->value()*1000 << " milliseconds\n";
+
 		}
 		if (i % 10 == 0)
 			cout << "Completed = " << i * 100 / ry << "%" << endl;
@@ -109,16 +116,24 @@ real * StochasticRayTracer::traceRay(Ray *r, Scene *e, real *probLight, Point3D 
     // in the scene and calculate the nearest to the viewer.
     // Finally, we will evaluate a local BRDF in the hitpoint.
 
+    Chrono *c1 = new Chrono();
+    c1->start();
 	h = this->getHitPoint(r, e);
+    c1->stop();
+	//cout << "getHitPoint elapsed time = " << c1->value()*1000 << " milliseconds\n";
 
     // If we have a hitpoint, we must calculate radiance emitted in the viewer direction
 	if (h != 0)
 	{
 		// Direction where we need to find the radiance
+        Chrono *c2 = new Chrono();
+        c2->start();
 		radianceDirection = viewer->substract(h->hitPoint);
 		radianceDirection->normalize();
 
 		radiance = this->calculateRadiance(h, radianceDirection, e, probLight);
+        c2->stop();
+    	//cout << "calculateRadiance elapsed time = " << c2->value() * 1000 << " milliseconds\n";
 
 		delete(radianceDirection);
 		delete(h->hitPoint);
@@ -142,7 +157,7 @@ real * StochasticRayTracer::traceRay(Ray *r, Scene *e, real *probLight, Point3D 
 // normal     : Nearest object normal in the hitpoint
 //-------------------------------------------------------------------------------
 
-real * StochasticRayTracer::calculateRadiance(HitPoint *h, Vector3D *dir, Scene *e, real *probLight)
+real * StochasticRayTracer::calculateRadiance(HitPoint *h, Vector3D *dir, Scene *s, real *probLight)
 {
 	// Radiance is composed of object emitted radiance (if the object is a light source)
     // plus object reflected radiance.
@@ -152,14 +167,23 @@ real * StochasticRayTracer::calculateRadiance(HitPoint *h, Vector3D *dir, Scene 
     // Radiance = Emitted Radiance + Reflected Radiance
     // Reflected Radiance = Direct Lighting + Indirect Lighting
 	
-	real *radiance = new real[3], *directLighting, *indirectLighting;
+	real *radiance = new real[3];
+    real *emittedRadiance;
+    real *reflectedRadiance = new real[3];
+    real *directLighting;
+    real *indirectLighting;
 
-	directLighting = this->directLighting(e, h, probLight, dir);
+    emittedRadiance = this->emittedRadiance(s, h);
+    //if (emittedRadiance[0] > 0)
+    //    cout << "Light";
 
-	indirectLighting = this->indirectLighting(e, h, probLight);
+	directLighting = this->directLighting(s, h, probLight, dir);
+	indirectLighting = this->indirectLighting(s, h, probLight);
+	for (int i = 0; i < 3; i++)
+		reflectedRadiance[i] = directLighting[i] + indirectLighting[i];
 
 	for (int i = 0; i < 3; i++)
-		radiance[i] = directLighting[i] + indirectLighting[i];
+		radiance[i] = emittedRadiance[i] + reflectedRadiance[i];
 
 	delete[](directLighting);
 	delete[](indirectLighting);
@@ -167,14 +191,33 @@ real * StochasticRayTracer::calculateRadiance(HitPoint *h, Vector3D *dir, Scene 
 	return(radiance);
 }
 
+// Calculates emitted radiance 
+real * StochasticRayTracer::emittedRadiance(Scene *s, HitPoint *h)
+{
+    real *radiance = new real[3];
+    real ke;
+    Material *mat;
+    real *color;
 
-//-------------------------------------------------------------------------------
+    Primitive *object = (*(s->object))[h->nearestObject];
+    mat = object->getMaterial();
+    ke = mat->getKe();
+    color = mat->getColor();
+    if (ke > 0)
+    {
+        for (int i = 0; i < 3; i++)
+            radiance[i] = color[i] * ke;
+    }   
+    else
+    {
+        radiance[0] = radiance[1] = radiance[2] = 0;
+    }       
 
-//-------------------------------------------------------------------------------
-// Calcula la iluminaci�n directa en un determinado punto de un object
-//-------------------------------------------------------------------------------
+    return(radiance);
+}
 
-real * StochasticRayTracer::directLighting(Scene *e, HitPoint *h, real *probLight, Vector3D *dir)
+// Calculates direct lighting given a hitpoint
+real * StochasticRayTracer::directLighting(Scene *s, HitPoint *h, real *probLight, Vector3D *dir)
 {
 
     // In order to calculate direct lighting, we send rays to the light sources (shadow rays)
@@ -202,10 +245,10 @@ real * StochasticRayTracer::directLighting(Scene *e, HitPoint *h, real *probLigh
 	for (unsigned int i = 0; i < this->shadowRays; i++)
 	{
 		// Light source selection
-		lightIndex = (int) getRandomIntMT(0, e->getNumberLights() - 1);
+		lightIndex = (int) getRandomIntMT(0, s->getNumberLights() - 1);
 
 		// Light point selection
-		selectedLight = e->getLight(lightIndex);
+		selectedLight = s->getLight(lightIndex);
 		lightPoint = selectedLight->getSamplePoint();
 		lightNormal = selectedLight->getNormal();
 
@@ -215,13 +258,11 @@ real * StochasticRayTracer::directLighting(Scene *e, HitPoint *h, real *probLigh
 		L->normalize();
 
 		// Check if we can see the light point from the hitpoint
-		lightVisible = e->mutuallyVisible(h->hitPoint, lightPoint);
+		lightVisible = s->mutuallyVisible(h->hitPoint, lightPoint);
 
         // If it is visible, we calculate reflected radiance from the light source
 		if (lightVisible)
 		{
-
-            // Pending to add emitted radiance in case the object is a light source.
             // - Each object must have an ID
             // - Light sources will be added to the scene always before the other objects,
             //   to have the lower IDs
@@ -229,7 +270,7 @@ real * StochasticRayTracer::directLighting(Scene *e, HitPoint *h, real *probLigh
             //   object ID with the number of light sources in the scene
 
 			//object = e->getObject(nearestObject);
-			object = (*(e->object))[h->nearestObject];
+			object = (*(s->object))[h->nearestObject];
 			mat = object->getMaterial();
 			rad = this->BRDF(mat, *(h->normal), L, dir);	  
 
@@ -253,6 +294,10 @@ real * StochasticRayTracer::directLighting(Scene *e, HitPoint *h, real *probLigh
 		delete(lightNormal);
 		delete(lightPoint);
 	}
+
+    radiance[0] /= this->shadowRays;
+    radiance[1] /= this->shadowRays;
+    radiance[2] /= this->shadowRays;
 
 	return(radiance);
 }
