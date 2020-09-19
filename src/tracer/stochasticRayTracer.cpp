@@ -33,6 +33,7 @@ Bitmap * StochasticRayTracer::trace(Scene *e)
 	Camera *cam;
 	Point3D *viewer;
 	vector<Ray *> *eyeRays;
+    Ray *eyeRay;
 	real *probLight;
 
 	cam = e->getCamera();
@@ -59,34 +60,46 @@ Bitmap * StochasticRayTracer::trace(Scene *e)
             Chrono *c = new Chrono();
             c->start();
 
-			// We send several rays for each pixel to reduce 
-            // aliasing and improve image quality
 			radiance[0] = radiance[1] = radiance[2] = 0;
-			eyeRays = cam->getSampleEyeRays(j, i, this->sampleRays);
-			for (unsigned int k = 0; k < this->sampleRays; k++)
-			{
-				
-				// _CrtMemState s1, s2, s3;
-				// _CrtMemCheckpoint(&s1);
+            if (this->sampleRays == 1)
+            {
+                eyeRay = cam->getEyeRay(j, i);
+                rad = traceRay(eyeRay, e, probLight, viewer);
+                for (unsigned int x = 0; x < 3; x++)
+                    radiance[x] = rad[x];
+                delete[](rad);			
+                delete(eyeRay);
+            }
+			else
+            {
+                // We send several rays for each pixel to reduce 
+                // aliasing and improve image quality
+                eyeRays = cam->getSampleEyeRays(j, i, this->sampleRays);
+                for (unsigned int k = 0; k < this->sampleRays; k++)
+                {
+                    
+                    // _CrtMemState s1, s2, s3;
+                    // _CrtMemCheckpoint(&s1);
 
-				rad = traceRay((*eyeRays)[k], e, probLight, viewer);
+                    rad = traceRay((*eyeRays)[k], e, probLight, viewer);
 
-				for (unsigned int x = 0; x < 3; x++)
-					radiance[x] += rad[x];
-				delete[](rad);			
+                    for (unsigned int x = 0; x < 3; x++)
+                        radiance[x] += rad[x];
+                    delete[](rad);			
 
-				//_CrtMemCheckpoint(&s2);
-				//if (_CrtMemDifference(&s3, &s1, &s2))
-				//	_CrtMemDumpStatistics(&s3);
+                    //_CrtMemCheckpoint(&s2);
+                    //if (_CrtMemDifference(&s3, &s1, &s2))
+                    //	_CrtMemDumpStatistics(&s3);
 
-			}
+                }
 
-			for (unsigned int k = 0; k < this->sampleRays; k++)
-				delete((*eyeRays)[k]);
-			delete(eyeRays);
+                for (unsigned int k = 0; k < this->sampleRays; k++)
+                    delete((*eyeRays)[k]);
+                delete(eyeRays);
 
-			for (unsigned int x = 0; x < 3; x++)
-				radiance[x] /= this->sampleRays;
+                for (unsigned int x = 0; x < 3; x++)
+                    radiance[x] /= this->sampleRays;
+            }
 
 			im->setHDRPixel(i, j, radiance[0], radiance[1], radiance[2]);
 
@@ -174,8 +187,6 @@ real * StochasticRayTracer::calculateRadiance(HitPoint *h, Vector3D *dir, Scene 
     real *indirectLighting;
 
     emittedRadiance = this->emittedRadiance(s, h);
-    //if (emittedRadiance[0] > 0)
-    //    cout << "Light";
 
 	directLighting = this->directLighting(s, h, probLight, dir);
 	indirectLighting = this->indirectLighting(s, h, probLight);
@@ -185,6 +196,7 @@ real * StochasticRayTracer::calculateRadiance(HitPoint *h, Vector3D *dir, Scene 
 	for (int i = 0; i < 3; i++)
 		radiance[i] = emittedRadiance[i] + reflectedRadiance[i];
 
+	delete[](emittedRadiance);
 	delete[](directLighting);
 	delete[](indirectLighting);
 
@@ -304,22 +316,24 @@ real * StochasticRayTracer::directLighting(Scene *s, HitPoint *h, real *probLigh
 
 
 // Indirect light in a given object point
-real * StochasticRayTracer::indirectLighting(Scene *e, HitPoint *h, real *probLight)
+real * StochasticRayTracer::indirectLighting(Scene *s, HitPoint *h, real *probLight)
 {
-	real *radiance, alfa, P, random, factor;
+	real *radiance, *radIndirectRay, alfa, P, random, factor, *brdf;
 	Vector3D *psi, *radianceDirection;
 	Ray *r;
 	HitPoint *hPsi;
 	Primitive *object;
-	
-	radiance = new real[3];
-
-	// Just a test
-	radiance[0] = radiance[1] = radiance[2] = 0;
-	return(radiance);
+    Material *mat;
+	int lightIndex;
+	Point3D *lightPoint;
+	bool lightVisible;
+	Vector3D *L, *lightNormal;
+	Light *selectedLight;
+    real distancePointLight;
 
 	// Initialize
 	radiance = new real[3];
+	radiance[0] = radiance[1] = radiance[2] = 0;
 	alfa = (real) 0.8;                 // Alfa is the material absortion probability
 	P = 1 - alfa;
 	r = new Ray();
@@ -334,16 +348,16 @@ real * StochasticRayTracer::indirectLighting(Scene *e, HitPoint *h, real *probLi
 	random = getRandomNumber(0, 1);
 	if (random < P)
 	{
+        radiance[0] = radiance[1] = radiance[2] = 0;
+
 		for (unsigned int i = 0; i < this->indirectRays; i++)
 		{
             // We obtain a random direction by uniformly sampling the hemisphere
 			psi = this->getRandomDirection();
 
-            // We calculate the point seen from the hitpoint in direction "psi"
-			
-			r->setDirection(psi);
-
-			hPsi = this->getHitPoint(r, e);
+            // We calculate the point seen from the hitpoint in direction "psi"			
+		    r->setDirection(psi);
+			hPsi = this->getHitPoint(r, s);
 
 			// If we have a hitpoint, calculate radiance emitted in direction psi
 			if (hPsi != 0)
@@ -352,7 +366,7 @@ real * StochasticRayTracer::indirectLighting(Scene *e, HitPoint *h, real *probLi
 				radianceDirection = h->hitPoint->substract(hPsi->hitPoint);
 				radianceDirection->normalize();
 
-				radiance = this->calculateRadiance(hPsi, radianceDirection, e, probLight);
+				radIndirectRay = this->calculateRadiance(hPsi, radianceDirection, s, probLight);
 
                 // We should multiply radiance by the following factor:
                 // BRDF(intersection) * cos(Nx, Psi) / pdf(Psi)
@@ -361,21 +375,39 @@ real * StochasticRayTracer::indirectLighting(Scene *e, HitPoint *h, real *probLi
                 // As we uniformly sample the hemisphere, the probability density
                 // function is 1 / (2 * Pi)    
 
-				// object = (*(e->object))[h->nearestObject];
-				// mat = object->getMaterial();
-				// factor = (this->BRDF(mat, *(h->normal), L, radianceDirection) * 
-				//			h->normal->dotProduct(radianceDirection)) * 2 * PI_RAYOS
-				// for (k = 0; k < 3; k++)
-				//     radiance[k] *= factor;		
-				// delete(mat);
+                // Light source selection
+                lightIndex = (int) getRandomIntMT(0, s->getNumberLights() - 1);
+
+                // Light point selection
+                selectedLight = s->getLight(lightIndex);
+                lightPoint = selectedLight->getSamplePoint();
+                lightNormal = selectedLight->getNormal();
+
+                // Ray from hitpoint to light point
+                L = lightPoint->substract(hPsi->hitPoint);
+                distancePointLight = L->length();
+                L->normalize();
+
+                // Check if we can see the light point from the hitpoint
+                lightVisible = s->mutuallyVisible(hPsi->hitPoint, lightPoint);
+
+                // If it is visible, we calculate reflected radiance from the light source
+                if (lightVisible)
+                {
+                    object = (*(s->object))[h->nearestObject];
+                    mat = object->getMaterial();
+                    brdf = this->BRDF(mat, *(h->normal), L, radianceDirection);
+                    factor = h->normal->dotProduct(psi) / (2 * PI_RAYOS);
+                    for (int k = 0; k < 3; k++)
+                        radiance[k] += radIndirectRay[k] * brdf[k] * factor;		
+                    delete(mat);
+                }
 
 				delete(radianceDirection);
 				delete(hPsi->hitPoint);
 				delete(hPsi->normal);
 				delete(hPsi);
 			}
-			else
-				radiance[0] = radiance[1] = radiance[2] = 0;
 
 			delete(psi);
 		}
@@ -385,6 +417,9 @@ real * StochasticRayTracer::indirectLighting(Scene *e, HitPoint *h, real *probLi
 	}
 	else
 		radiance[0] = radiance[1] = radiance[2] = 0;
+
+    for (unsigned int i = 0; i < 3; i++)
+        radiance[i] /= P;
 
 	delete(r);
 
