@@ -2,61 +2,30 @@
 
 Sphere::Sphere()
 {
-    this->center = new Point3D(0, 0, 0);
+    this->center = std::make_shared<Point3D>(0, 0, 0);
     this->radius = 1.0;
-    this->material = new Material();
+    this->material = std::make_shared<Material>();
     this->type = SPHERE;
 }
 
-Sphere::Sphere(Point3D *center, real radius, Material *material)
+Sphere::Sphere(std::shared_ptr<Point3D> center, real radius, std::shared_ptr<Material> material)
 {
-    this->center = new Point3D(*center);
+    this->center = std::make_shared<Point3D>(*center);
     this->radius = radius;
-    this->material = new Material(*material);
+    this->material = std::make_shared<Material>(*material);
     this->type = SPHERE;
 }
-
-
-//-----------------------------------------------
-
-Sphere::Sphere(const Sphere &e)
-{
-    this->center = new Point3D(*(e.center));
-    this->radius = e.radius;
-    this->material = new Material(*(e.material));
-    this->type = SPHERE;
-}
-
-
-//-----------------------------------------------
-
-Sphere * Sphere::copy()
-{
-    return(new Sphere(*this));
-}
-
-
-//-----------------------------------------------
-
-Sphere::~Sphere()
-{
-	delete(this->center);
-}
-
-
-//-----------------------------------------------
 
 // Intersects the sphere with a ray
 // If there is a hit, returns:
 // - Hit point
 // - Normal on the hit point
 // If not, returns NULL (0)
-
-real Sphere::intersect(Ray *r, Vector3D &normal)
+real Sphere::intersect(std::shared_ptr<Ray> r, Vector3D &normal)
 {
-    real b, c, t, t1, t2, discriminant, raiz;
-    Vector3D *rayDirection, *difRayCenter, *n;
-    Point3D *rayOrigin, *intersection;  
+    real b, c, t, t1, t2, discriminant, squareRoot;
+    std::shared_ptr<Vector3D> rayDirection, difRayCenter, n;
+    std::shared_ptr<Point3D> rayOrigin, intersection;  
   
     // To calculate the intersection, we substitute ray parameters
     // in the sphere equation
@@ -78,22 +47,22 @@ real Sphere::intersect(Ray *r, Vector3D &normal)
     discriminant = b * b - c;
     if (discriminant > 0.0)
     {
-        raiz = sqrt(discriminant);
-        t1 = - b - raiz;
-        t2 = - b + raiz;
+        squareRoot = sqrt(discriminant);
+        t1 = - b - squareRoot;
+        t2 = - b + squareRoot;
         if (t1 > 0.0)
         {
             if ((t2 > 0.0) && (t2 < t1))
-            t = t2;
+                t = t2;
             else
-            t = t1;
+                t = t1;
         }
         else
         {
             t = t2;
         }    
 
-        Vector3D *tD = rayDirection->product(t);
+        std::shared_ptr<Vector3D> tD = rayDirection->product(t);
         intersection = rayOrigin->sum(tD);
 
         n = intersection->substract(this->center);
@@ -105,23 +74,10 @@ real Sphere::intersect(Ray *r, Vector3D &normal)
         normal.setZ(n->getZ());
         normal.normalize();
 
-        delete(tD);
-        delete(n);
-        delete(intersection);
-        delete(rayDirection);
-        delete(rayOrigin);
-        delete(difRayCenter);
-
         return(t);
     }
-
-    delete(rayDirection);
-    delete(rayOrigin);
-    delete(difRayCenter);
 
     return(0);
 }
 
-
-//-----------------------------------------------
 

@@ -8,16 +8,13 @@
 
 class Sphere : public Primitive
 {
-	Point3D *center;
+	std::shared_ptr<Point3D> center;
 	real radius;
   
   public:
 	Sphere();
-	Sphere(Point3D *center, real radius, Material *material);
-	Sphere(const Sphere &e);
-	Sphere *copy();
-	~Sphere();
-	real intersect(Ray *r, Vector3D &normal);
+	Sphere(std::shared_ptr<Point3D> center, real radius, std::shared_ptr<Material> material);
+	real intersect(std::shared_ptr<Ray> r, Vector3D &normal);
 };
 
 

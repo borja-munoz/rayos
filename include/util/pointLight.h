@@ -4,24 +4,23 @@
 #include "light.h"
 #include "point3D.h"
 
+#include <memory>
+
 
 //-------------------------------------------------------------------------------
 
 class PointLight : public Light
 {
-	Point3D *location;
+	std::shared_ptr<Point3D> location;
 
   public: 
 	PointLight();
-	PointLight(Point3D *location, real *color, real intensity);
-	PointLight(PointLight &l);
-	PointLight *copy(void);
-	~PointLight();
-	Point3D *getLocation(void);
-	void setLocation(Point3D *p);
-	Point3D *getSamplePoint(void);
+	PointLight(std::shared_ptr<Point3D> location, std::shared_ptr<Color> color, real intensity);
+	std::shared_ptr<Point3D> getLocation(void);
+	void setLocation(std::shared_ptr<Point3D> p);
+	std::shared_ptr<Point3D> getSamplePoint(void);
 	real getArea(void);
-	Vector3D *getNormal(void);
+	std::shared_ptr<Vector3D> getNormal(void);
 };
 
 

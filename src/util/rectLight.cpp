@@ -1,70 +1,31 @@
 #include "rectLight.h"
 
-//-------------------------------------------------------------------------------
-
 RectLight::RectLight()
 {
 }
 
-
-//-------------------------------------------------------------------------------
-
-RectLight::RectLight(Quad *location, real *color, real intensity)
+RectLight::RectLight(std::shared_ptr<Quad> location, std::shared_ptr<Color> color, real intensity)
 	: Light(color, intensity)
 {	
-	this->location = new Quad(*location);
+	this->location = location;
 }
 
-
-//-------------------------------------------------------------------------------
-
-RectLight::RectLight(RectLight &l)
-	: Light(l)
+std::shared_ptr<Quad> RectLight::getLocation(void)
 {
-	this->location = new Quad(*(l.location));
+	return(this->location);
 }
 
-
-//-------------------------------------------------------------------------------
-
-RectLight * RectLight::copy(void)
+void RectLight::setLocation(std::shared_ptr<Quad> q)
 {
-	return(new RectLight(*this));
+	this->location = q;
 }
 
-
-//-------------------------------------------------------------------------------
-
-RectLight::~RectLight()
+std::shared_ptr<Point3D> RectLight::getSamplePoint(void)
 {
-	delete(this->location);
-}
-
-
-//-------------------------------------------------------------------------------
-
-Quad * RectLight::getLocation(void)
-{
-	return(new Quad(*(this->location)));
-}
-
-
-//-------------------------------------------------------------------------------
-
-void RectLight::setLocation(Quad *c)
-{
-	this->location = new Quad(*c);
-}
-
-
-//-------------------------------------------------------------------------------
-
-Point3D * RectLight::getSamplePoint(void)
-{
-	Point3D *samplePoint, *p;
+	std::shared_ptr<Point3D> samplePoint, p;
 	real xi, eta;
-	Vector3D *aux1, *aux2, *aux3;
-	vector<Point3D *> *coordinates;
+	std::shared_ptr<Vector3D> aux1, aux2, aux3;
+	vector<std::shared_ptr<Point3D>> coordinates;
 
     // To generate a random point within a quad,
     // we have used information from this URL:
@@ -80,63 +41,39 @@ Point3D * RectLight::getSamplePoint(void)
 
 	coordinates = this->location->getCoordinates();
 
-	p = (*coordinates)[0];
-	aux1 = new Vector3D(p->getX(), p->getY(), p->getZ());
+	p = coordinates[0];
+	aux1 = std::make_shared<Vector3D>(p->getX(), p->getY(), p->getZ());
 	aux2 = aux1->product((1 - xi) * (1 - eta));  // aux2 = (1-xi)(1-eta)A
-	delete(aux1);
 
-	p = (*coordinates)[1];
-	aux1 = new Vector3D(p->getX(), p->getY(), p->getZ());
+	p = coordinates[1];
+	aux1 = std::make_shared<Vector3D>(p->getX(), p->getY(), p->getZ());
 	aux3 = aux1->product((1 + xi) * (1 - eta));
-	delete(aux1);
 	aux1 = aux2->sum(aux3);					  // aux1 = (1-xi)(1-eta)A + (1+xi)(1-eta)B
-	delete(aux2);
-	delete(aux3);
 
-	p = (*coordinates)[2];
-	aux2 = new Vector3D(p->getX(), p->getY(), p->getZ());
+	p = coordinates[2];
+	aux2 = std::make_shared<Vector3D>(p->getX(), p->getY(), p->getZ());
 	aux3 = aux2->product((1 + xi) * (1 + eta));
-	delete(aux2);
 	aux2 = aux1->sum(aux3);					  // aux2 = (1-xi)(1-eta)A + (1+xi)(1-eta)B + (1+xi)(1+eta)C
-	delete(aux1);
-	delete(aux3);
 
-	p = (*coordinates)[3];
-	aux1 = new Vector3D(p->getX(), p->getY(), p->getZ());
+	p = coordinates[3];
+	aux1 = std::make_shared<Vector3D>(p->getX(), p->getY(), p->getZ());
 	aux3 = aux1->product((1 - xi) * (1 + eta));
-	delete(aux1); 
 	aux1 = aux2->sum(aux3);				  
 
-	samplePoint = new Point3D(aux1->getX() / 4, aux1->getY() / 4, aux1->getZ() / 4);
-
-	delete(aux1);
-	delete(aux2);
-	delete(aux3);
-	for (unsigned int i = 0; i < coordinates->size(); i++)
-		delete ((*coordinates)[i]);
-	delete(coordinates);
+	samplePoint = std::make_shared<Point3D>(aux1->getX() / 4, aux1->getY() / 4, aux1->getZ() / 4);
 
 	return(samplePoint);
 }
-
-
-//-------------------------------------------------------------------------------
 
 real RectLight::getArea(void)
 {
 	return(this->location->getArea());
 }
 
-
-//-------------------------------------------------------------------------------
-
-Vector3D * RectLight::getNormal(void)
+std::shared_ptr<Vector3D> RectLight::getNormal(void)
 {
 	return(this->location->getNormal());
 }
-
-
-//-------------------------------------------------------------------------------
 
 
 

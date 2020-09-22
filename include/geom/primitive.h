@@ -5,14 +5,16 @@
 #include "../util/ray.h"
 #include "../util/util.h"
 
+#include <memory>
 
 //-----------------------------------------------
 
 typedef enum
 {
 	SPHERE,
-	TRIANGULO,
-	QUAD
+	TRIANGLE,
+	QUAD,
+    TRIANGLE_MESH
 } ObjectType;
 
 
@@ -21,17 +23,15 @@ typedef enum
 class Primitive
 {
   protected:
-	Material *material;
+	std::shared_ptr<Material> material;
 	ObjectType type;
   
   public:
  
 	Primitive();
-	virtual ~Primitive();
-	virtual Primitive *copy(void) = 0;
-	Material *getMaterial(void);
+	std::shared_ptr<Material> getMaterial(void);
 	ObjectType getType(void);
-	virtual real intersect(Ray *r, Vector3D &normal) = 0;
+	virtual real intersect(std::shared_ptr<Ray> r, Vector3D &normal) = 0;
 };
 
 

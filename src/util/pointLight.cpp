@@ -1,69 +1,29 @@
 #include "pointLight.h"
 
-//-------------------------------------------------------------------------------
-
 PointLight::PointLight()
 {
 }
 
-
-//-------------------------------------------------------------------------------
-
-PointLight::PointLight(Point3D *location, real *color, real intensity)
+PointLight::PointLight(std::shared_ptr<Point3D> location, std::shared_ptr<Color> color, real intensity)
 	: Light(color, intensity)
 {
-	this->location = new Point3D(*location);
+	this->location = location;
 }
 
-
-//-------------------------------------------------------------------------------
-
-PointLight::PointLight(PointLight &l)
-	: Light(l)
+std::shared_ptr<Point3D> PointLight::getLocation(void)
 {
-	this->location = new Point3D(*(l.location));
+	return(this->location);
 }
 
-
-//-------------------------------------------------------------------------------
-
-PointLight * PointLight::copy(void)
+void PointLight::setLocation(std::shared_ptr<Point3D> location)
 {
-	return(new PointLight(*this));
+	this->location = location;
 }
 
-
-//-------------------------------------------------------------------------------
-
-PointLight::~PointLight()
+std::shared_ptr<Point3D> PointLight::getSamplePoint(void)
 {
-	delete(this->location);
+	return(this->location);
 }
-
-
-//-------------------------------------------------------------------------------
-
-Point3D * PointLight::getLocation(void)
-{
-	return(new Point3D(*(this->location)));
-}
-
-
-//-------------------------------------------------------------------------------
-
-void PointLight::setLocation(Point3D *location)
-{
-	this->location = new Point3D(*location);
-}
-
-
-//-------------------------------------------------------------------------------
-
-Point3D * PointLight::getSamplePoint(void)
-{
-	return(new Point3D(*this->location));
-}
-
 
 // The area for a point light source is 1 because the probability
 // of selecting a point within this light source is always 1
@@ -73,9 +33,8 @@ real PointLight::getArea(void)
 	return(1.0);
 }
 
-
 // How do we define the normal to a point light source?
-Vector3D * PointLight::getNormal(void)
+std::shared_ptr<Vector3D> PointLight::getNormal(void)
 {
-	return(new Vector3D());
+	return(std::make_shared<Vector3D>());
 }

@@ -1,42 +1,12 @@
 #include "triangle.h"
 
-
-//-----------------------------------------------
-
 Triangle::Triangle()
 {
-    Vector3D *aux1, *aux2;
+    std::shared_ptr<Vector3D> aux1, aux2;
 
-    this->vertex[0] = new Point3D(-1, 0, 0);
-    this->vertex[1] = new Point3D(0, 1, 0);
-    this->vertex[2] = new Point3D(1, 0, 0);
-
-    aux1 = this->vertex[1]->substract(this->vertex[0]);
-    aux2 = this->vertex[2]->substract(this->vertex[0]);
-    this->normal = aux1->crossProduct(aux2);
-    this->normal->normalize();
-    this->distance = - (this->normal->getX() * this->vertex[0]->getX() +
-                        this->normal->getY() * this->vertex[0]->getY() +
-                        this->normal->getZ() * this->vertex[0]->getZ());
-
-    this->material = new Material();
-    
-    this->type = TRIANGULO;
-    
-    delete(aux1);
-    delete(aux2);
-}
-
-
-//-----------------------------------------------
-
-Triangle::Triangle(Point3D *x, Point3D *y, Point3D *z, Material *mat)
-{
-    Vector3D *aux1, *aux2;
-
-    this->vertex[0] = new Point3D(*x);
-    this->vertex[1] = new Point3D(*y);
-    this->vertex[2] = new Point3D(*z);
+    this->vertex[0] = std::make_shared<Point3D>(-1, 0, 0);
+    this->vertex[1] = std::make_shared<Point3D>(0, 1, 0);
+    this->vertex[2] = std::make_shared<Point3D>(1, 0, 0);
 
     aux1 = this->vertex[1]->substract(this->vertex[0]);
     aux2 = this->vertex[2]->substract(this->vertex[0]);
@@ -46,62 +16,46 @@ Triangle::Triangle(Point3D *x, Point3D *y, Point3D *z, Material *mat)
                         this->normal->getY() * this->vertex[0]->getY() +
                         this->normal->getZ() * this->vertex[0]->getZ());
 
-    this->material = new Material(*mat);
+    this->material = std::make_shared<Material>();
     
-    this->type = TRIANGULO;
+    this->type = TRIANGLE;
+}
+
+Triangle::Triangle(std::shared_ptr<Point3D> x, 
+                   std::shared_ptr<Point3D> y, 
+                   std::shared_ptr<Point3D> z, 
+                   std::shared_ptr<Material> mat)
+{
+    std::shared_ptr<Vector3D> aux1, aux2;
+
+    this->vertex[0] = x;
+    this->vertex[1] = y;
+    this->vertex[2] = z;
+
+    aux1 = this->vertex[1]->substract(this->vertex[0]);
+    aux2 = this->vertex[2]->substract(this->vertex[0]);
+    this->normal = aux1->crossProduct(aux2);
+    this->normal->normalize();
+    this->distance = - (this->normal->getX() * this->vertex[0]->getX() +
+                        this->normal->getY() * this->vertex[0]->getY() +
+                        this->normal->getZ() * this->vertex[0]->getZ());
+
+    this->material = mat;
     
-    delete(aux1);
-    delete(aux2);
+    this->type = TRIANGLE;
 }
-
-
-//-----------------------------------------------
-
-Triangle::Triangle(const Triangle &t)
-{
-    for (int i = 0; i < 3; i++)
-        this->vertex[i] = new Point3D(*(t.vertex[i]));
-    this->normal = new Vector3D(*(t.normal));
-    this->distance = t.distance;
-    this->material = new Material(*(t.material));
-    this->type = TRIANGULO;
-}
-
-//-----------------------------------------------
-
-Triangle * Triangle::copy()
-{
-	return(new Triangle(*this));
-}
-
-
-//-----------------------------------------------
-
-Triangle::~Triangle()
-{
-	unsigned int i;
-
-	for (i = 0; i < 3; i++)
-		delete(this->vertex[i]);
-	
-	delete(this->normal);
-}
-
-
-//-----------------------------------------------
 
 // Intersects the poligon with a ray
 // If there is a hit, returns:
 // - Hit point
 // - Normal on the hit point
 // If not, returns NULL (0)
-
-real Triangle::intersect(Ray *r, Vector3D &normal)
+real Triangle::intersect(std::shared_ptr<Ray> r, Vector3D &normal)
 {
 	int crosses; 
 	real denominator, t, x0, y0, x1, y1;
-	Point3D *intersection, *rayOrigin;
-	Vector3D *rayDirection;
+	std::shared_ptr<Point3D> intersection, rayOrigin;
+	std::shared_ptr<Vector3D> rayDirection;
 
     // We calculate intersection between the ray and the triangle plane 
 
@@ -116,20 +70,17 @@ real Triangle::intersect(Ray *r, Vector3D &normal)
 	denominator = rayDirection->dotProduct(this->normal);
 	if (ZERO(denominator))
 	{
-		delete(rayDirection);
 		return(0);
 	}
 
     rayOrigin = r->getOrigin();
-	Vector3D *oV0;
+	std::shared_ptr<Vector3D> oV0;
 	oV0 = rayOrigin->substract(this->vertex[0]);
     t = - (oV0->dotProduct(this->normal)) / denominator;
-	delete(oV0);
     
-	Vector3D *td;
+	std::shared_ptr<Vector3D> td;
 	td = rayDirection->product(t);
     intersection = rayOrigin->sum(td);
-	delete(td);
 	
     // We calculate the greater normal vector component (absolute value)
     // to select the plane where we will do the projection (the one that maximizes the projected region)
@@ -234,13 +185,6 @@ real Triangle::intersect(Ray *r, Vector3D &normal)
 	else
 		t = 0;
 
-	delete(rayDirection);
-	delete(rayOrigin);
-	delete(intersection);
-
 	return(t);
 }
-
-
-//-----------------------------------------------
 

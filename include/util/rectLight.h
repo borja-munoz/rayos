@@ -6,25 +6,21 @@
 #include "util.h"
 #include "light.h"
 
-
-//-------------------------------------------------------------------------------
+#include <memory>
 
 class RectLight : public Light
 {
-	Quad *location;
+	std::shared_ptr<Quad> location;
 
   public:
  
 	RectLight();
-	RectLight(Quad *location, real *color, real intensity);
-	RectLight(RectLight &l);
-	RectLight *copy(void);
-	~RectLight();
-	Quad *getLocation(void);
-	void setLocation(Quad *c);
-	Point3D *getSamplePoint(void);
+	RectLight(std::shared_ptr<Quad> location, std::shared_ptr<Color> color, real intensity);
+	std::shared_ptr<Quad> getLocation(void);
+	void setLocation(std::shared_ptr<Quad> c);
+	std::shared_ptr<Point3D> getSamplePoint(void);
 	real getArea(void);
-	Vector3D *getNormal(void);
+	std::shared_ptr<Vector3D> getNormal(void);
 };
 
 

@@ -5,24 +5,25 @@
 #include "vector3D.h"
 #include "util.h"
 
+#include <memory>
 
 //-----------------------------------------------
 
 class Ray
 {
-	Point3D *origin;
-	Vector3D *direction;
+	std::shared_ptr<Point3D> origin;
+	std::shared_ptr<Vector3D> direction;
   
   public:
  
 	Ray();
-	Ray(Point3D *p, Vector3D *dir);
+	Ray(std::shared_ptr<Point3D> p, std::shared_ptr<Vector3D> dir);
 	~Ray();
-	Point3D *getOrigin(void);
-	Vector3D *getDirection(void);
-	void setOrigin(Point3D *p);
-	void setDirection(Vector3D *v);
-	Point3D *pointParametric(real t);
+	std::shared_ptr<Point3D> getOrigin(void);
+	std::shared_ptr<Vector3D> getDirection(void);
+	void setOrigin(std::shared_ptr<Point3D> p);
+	void setDirection(std::shared_ptr<Vector3D> v);
+	std::shared_ptr<Point3D> pointParametric(real t);
 };
 
 

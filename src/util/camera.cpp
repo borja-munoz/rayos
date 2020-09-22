@@ -3,9 +3,9 @@
 
 Camera::Camera()
 {
-	this->location = new Point3D(0, 0, -0.75);
-	this->view = new Point3D(0, 0, -2);
-	this->up = new Vector3D(0, 1, 0);
+	this->location = std::make_shared<Point3D>(0, 0, -0.75);
+	this->view = std::make_shared<Point3D>(0, 0, -2);
+	this->up = std::make_shared<Vector3D>(0, 1, 0);
 	this->hFov = 60;
 	this->vFov = 60;
 	this->distance = 1;
@@ -15,12 +15,18 @@ Camera::Camera()
 }
 
 
-Camera::Camera(Point3D *location, Point3D *view, Vector3D *up, real distance, 
-	           real hFov, real vFov, unsigned int xRes, unsigned int yRes)
+Camera::Camera(std::shared_ptr<Point3D> location, 
+               std::shared_ptr<Point3D> view, 
+               std::shared_ptr<Vector3D> up, 
+               real distance, 
+	           real hFov, 
+               real vFov, 
+               unsigned int xRes, 
+               unsigned int yRes)
 {
-	this->location = new Point3D(*location);
-	this->view = new Point3D(*view);
-	this->up = new Vector3D(*up);
+	this->location = location;
+	this->view = view;
+	this->up = up;
 	this->distance = distance;
 	this->hFov = hFov;
 	this->vFov = vFov;
@@ -29,7 +35,6 @@ Camera::Camera(Point3D *location, Point3D *view, Vector3D *up, real distance,
 
 	this->initialize();
 }
-
 
 void Camera::initialize(void)
 {
@@ -50,41 +55,10 @@ void Camera::initialize(void)
 	this->vViewport = this->yCam->product(this->distance * tan(RADIANS(this->vFov)));
 }
 
-
-Camera::Camera(Camera &c)
+std::shared_ptr<Point3D> Camera::getLocation(void)
 {
-	this->location = new Point3D(*(c.location));
-	this->view = new Point3D(*(c.view));
-	this->up = new Vector3D(*(c.up));
-	this->distance = c.distance;
-	this->hFov = c.hFov;
-	this->vFov = c.vFov;
-	this->xRes = c.xRes;
-	this->yRes = c.yRes;
-
-	this->initialize();
+	return(std::make_shared<Point3D>(*(this->location)));
 }
-
-
-Camera::~Camera()
-{
-	delete(this->location);
-	delete(this->view);
-	delete(this->up);
-	delete(this->xCam);
-	delete(this->yCam);
-	delete(this->zCam);
-	delete(this->oViewport);
-	delete(this->uViewport);
-	delete(this->vViewport);
-}
-
-
-Point3D * Camera::getLocation(void)
-{
-	return(new Point3D(*(this->location)));
-}
-
 
 void Camera::getResolution(unsigned int &xRes, unsigned int &yRes)
 {
@@ -92,13 +66,12 @@ void Camera::getResolution(unsigned int &xRes, unsigned int &yRes)
 	yRes = this->yRes;
 }
 
-
-Ray * Camera::getEyeRay(real x, real y)
+std::shared_ptr<Ray> Camera::getEyeRay(real x, real y)
 {
-	Vector3D *direction;
-	Ray *eyeRay;
+	std::shared_ptr<Vector3D> direction;
+	std::shared_ptr<Ray> eyeRay;
 	real alfa, beta;
-	Point3D *pViewport;
+	std::shared_ptr<Point3D> pViewport;
 
     // First we need to calculate the point in the viewport where the ray goes through
 	// P = oViewport + (alfa * uViewport) + (beta * vViewport)
@@ -112,25 +85,21 @@ Ray * Camera::getEyeRay(real x, real y)
 	direction->normalize();
 
 	// We use the camera location as ray origin
-	eyeRay = new Ray();
-	eyeRay->setOrigin(this->location);
-	eyeRay->setDirection(direction);
+	eyeRay = std::make_shared<Ray>(this->location, direction);
 
 	return(eyeRay);
 }
 
 
-vector<Ray *> * Camera::getSampleEyeRays(real x, real y, unsigned int sampleRays)
+vector<std::shared_ptr<Ray>> Camera::getSampleEyeRays(real x, real y, unsigned int sampleRays)
 {
-	Vector3D *direction;
-	Ray *eyeRay;
+	std::shared_ptr<Vector3D> direction;
+	std::shared_ptr<Ray> eyeRay;
 	real alfa, beta;
-	Point3D *pViewport;
-	vector<Ray *> *eyeRays;
+	std::shared_ptr<Point3D> pViewport;
+	vector<std::shared_ptr<Ray>> eyeRays;
 	real jitterX, jitterY;
 	real sampleRaysDiv2;
-
-	eyeRays = new vector<Ray *>;
 
     // This value will be used many times so we precalculate it
 	sampleRaysDiv2 = sampleRays / 2.0;
@@ -151,27 +120,21 @@ vector<Ray *> * Camera::getSampleEyeRays(real x, real y, unsigned int sampleRays
 			beta = 1 - ((2 * (y + jitterY)) / this->yRes); 
 
 			// Finally we can get the point in the viewport
-			Vector3D *uAlfa = uViewport->product(alfa);
-			Vector3D *vBeta = vViewport->product(beta);
-			Vector3D *desp = uAlfa->sum(vBeta);
+			std::shared_ptr<Vector3D> uAlfa = uViewport->product(alfa);
+			std::shared_ptr<Vector3D> vBeta = vViewport->product(beta);
+			std::shared_ptr<Vector3D> desp = uAlfa->sum(vBeta);
 			pViewport = oViewport->sum(desp);
-			delete(desp);
-			delete(vBeta);
-			delete(uAlfa);
 
             // Ray direction will be the vector from the viewport point to the camera location
 			direction = pViewport->substract(this->location);
 			direction->normalize();
 
 			// We crete the ray with the camera location as origin
-			eyeRay = new Ray();
+			eyeRay = std::make_shared<Ray>();
 			eyeRay->setOrigin(this->location);
 			eyeRay->setDirection(direction);
 			
-			eyeRays->push_back(eyeRay);
-
-			delete(pViewport);
-			delete(direction);
+			eyeRays.push_back(eyeRay);
 		}
 
 	return(eyeRays);
