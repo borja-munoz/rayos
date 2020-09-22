@@ -27,11 +27,11 @@ void Bitmap::setRGBPixel(unsigned int i, unsigned int j, unsigned char r, unsign
 }
 
 
-void Bitmap::setHDRPixel(unsigned int i, unsigned int j, real r, real g, real b)
+void Bitmap::setHDRPixel(unsigned int i, unsigned int j, Color color)
 {
-    this->bufferHDR[this->width * i * 3 + j * 3    ] = r;
-    this->bufferHDR[this->width * i * 3 + j * 3 + 1] = g;
-    this->bufferHDR[this->width * i * 3 + j * 3 + 2] = b;
+    this->bufferHDR[this->width * i * 3 + j * 3    ] = color.getR();
+    this->bufferHDR[this->width * i * 3 + j * 3 + 1] = color.getG();
+    this->bufferHDR[this->width * i * 3 + j * 3 + 2] = color.getB();
 }
 
 
