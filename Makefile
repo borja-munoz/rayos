@@ -42,22 +42,22 @@ BUILDLIST := $(patsubst include/%,$(BUILDDIR)/%,$(INCDIRS))
 # BUILDLIST := $(patsubst $(INCDIRS)/%,$(BUILDDIR)/%,$(INCDIRS))
 
 # Shared Compiler Flags
-CFLAGS := -c
+CFLAGS := -c -g -msse2
 INC := -I include $(INCLIST) -I /usr/local/include
 # LIB := -L 
-LIB :=  
+LIB := -L /usr/local/lib -lpbrtParser
 
 # Platform Specific Compiler Flags
 ifeq ($(UNAME_S),Linux)
     CFLAGS += -std=gnu++11 -O2 # -fPIC
 else
-  CFLAGS += -std=c++11 -stdlib=libc++ -O2 -fdeclspec
+  CFLAGS += -std=c++11 -stdlib=libc++ -O3 -fdeclspec
 endif
 
 $(TARGET): $(OBJECTS)
 	@mkdir -p $(TARGETDIR)
 	@echo "Linking..."
-	@echo "  Linking $(TARGET)"; $(CC) $^ -o $(TARGET) $(LIB)
+	@echo "  Linking $(TARGET)"; $(CC) $^ -o $(TARGET) $(LIB) 
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
 	@mkdir -p $(BUILDLIST)
