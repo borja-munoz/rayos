@@ -15,18 +15,30 @@ class StochasticRayTracer : public Tracer
 	unsigned int shadowRays;					 // Number of shadow rays
 	unsigned int indirectRays;                   // Number of indirect rays
 
-	real *traceRay(Ray *r, Scene *s, real *probLight, Point3D *viewer);
-	real *calculateRadiance(HitPoint *h, Vector3D *dir, Scene *e, real *probLight);
-	real *emittedRadiance(Scene *s, HitPoint *h);
-	real *directLighting(Scene *s, HitPoint *h, real *probLight, Vector3D *dir);
-	real *indirectLighting(Scene *s, HitPoint *h, real *probLight);
-	Vector3D *getRandomDirection(void);
+	Color traceRay(std::shared_ptr<Ray> r, 
+                   std::shared_ptr<Scene> s, 
+                   std::vector<real> probLight, 
+                   std::shared_ptr<Point3D> viewer);
+	Color calculateRadiance(std::shared_ptr<HitPoint> h, 
+                            std::shared_ptr<Vector3D> dir, 
+                            std::shared_ptr<Scene> s, 
+                            std::vector<real> probLight);
+	Color emittedRadiance(std::shared_ptr<Scene> s, 
+                          std::shared_ptr<HitPoint> h);
+	Color directLighting(std::shared_ptr<Scene> s, 
+                         std::shared_ptr<HitPoint> h, 
+                         std::vector<real> probLight, 
+                         std::shared_ptr<Vector3D> dir);
+	Color indirectLighting(std::shared_ptr<Scene> s, 
+                           std::shared_ptr<HitPoint> h, 
+                           std::vector<real> probLight);
+	std::shared_ptr<Vector3D> getRandomDirection(void);
 
   public:
 	StochasticRayTracer();
 	StochasticRayTracer(unsigned int sampleRays, unsigned int shadowRays);
 	StochasticRayTracer(BRDFtype t);
-	Bitmap *trace(Scene *e);
+	std::shared_ptr<Bitmap> trace(std::shared_ptr<Scene> s);
 };
 
 

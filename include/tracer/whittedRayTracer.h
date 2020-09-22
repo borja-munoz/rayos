@@ -5,12 +5,12 @@
 
 class WhittedRayTracer : public Tracer
 {
-	real *traceRay(Ray *r, Scene *e);
+	Color traceRay(std::shared_ptr<Ray> r, std::shared_ptr<Scene> s);
 
   public:
 	WhittedRayTracer();
 	WhittedRayTracer(BRDFtype t);
-	Bitmap *trace(Scene *e);
+	std::shared_ptr<Bitmap> trace(std::shared_ptr<Scene> e);
 };
 
 

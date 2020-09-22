@@ -1,5 +1,4 @@
 #include "whittedRayTracer.h"
-#include <iostream>
 
 WhittedRayTracer::WhittedRayTracer()
 {
@@ -14,25 +13,25 @@ WhittedRayTracer::WhittedRayTracer(BRDFtype t)
 }
 
 
-Bitmap * WhittedRayTracer::trace(Scene *e)
+std::shared_ptr<Bitmap> WhittedRayTracer::trace(std::shared_ptr<Scene> s)
 {
 	unsigned int rx, ry;
-	real *radiance;
-	Bitmap *im;
-	Camera *cam;
+	Color radiance;
+	std::shared_ptr<Bitmap> im;
+	std::shared_ptr<Camera> cam;
 
-	cam = e->getCamera();
+	cam = s->getCamera();
 
 	cam->getResolution(rx, ry);
-	im = new Bitmap(rx, ry);
+	im = std::make_shared<Bitmap>(rx, ry);
 
 	// We loop through the entire viewplane
 	for (unsigned int i = 0; i < ry; i++)
 		for (unsigned int j = 0; j < rx; j++)
 		{
-			radiance = traceRay(cam->getEyeRay(j, i), e);
+			radiance = traceRay(cam->getEyeRay(j, i), s);
 
-			im->setHDRPixel(i, j, radiance[0], radiance[1], radiance[2]);
+			im->setHDRPixel(i, j, radiance);
 		}
 
 	return(im);
@@ -40,25 +39,24 @@ Bitmap * WhittedRayTracer::trace(Scene *e)
 
 
 // Send a ray and returns radiance emitted
-real * WhittedRayTracer::traceRay(Ray *r, Scene *e)
+Color WhittedRayTracer::traceRay(std::shared_ptr<Ray> r, std::shared_ptr<Scene> s)
 {
-	real *radiance = new real[3];
+	Color radiance;
 	int numberObjects, i, j;
-	Point3D *hitPoint;
-	real *intersection;
-	Light *light1;
-	Vector3D *L, *V;
-	Primitive *object;
+	std::shared_ptr<Point3D> hitPoint;
+	std::vector<real> intersection;
+	std::shared_ptr<Light> light1;
+	std::shared_ptr<Vector3D> L, V;
+	std::shared_ptr<Primitive> object;
 	  
-	numberObjects = e->getNumberObjects();
-	intersection = new real[numberObjects];
-	Vector3D *N[numberObjects];
-	light1 = e->getLight(0);
+	numberObjects = s->getNumberObjects();
+	std::shared_ptr<Vector3D> N[numberObjects];
+	light1 = s->getLight(0);
 	for (i = 0; i < numberObjects; i++)
 	{
-		N[i] = new Vector3D();    
-		object = e->getObject(i);
-		intersection[i] = object->intersect(r, *N[i]);
+		N[i] = std::make_shared<Vector3D>();    
+		object = s->getObject(i);
+		intersection.push_back(object->intersect(r, *N[i]));
 	}
 
 	int nearest = -1;
@@ -80,7 +78,7 @@ real * WhittedRayTracer::traceRay(Ray *r, Scene *e)
         if (nearest == 0)
         {
             // First element in the scene is the light source
-            radiance[0] = radiance[1] = radiance[2] = 1;
+            radiance = Color(1, 1, 1);
         }
 		else
         {
@@ -89,20 +87,14 @@ real * WhittedRayTracer::traceRay(Ray *r, Scene *e)
             L->normalize();
 
             // Vector to viewer
-            V = e->getCamera()->getLocation()->substract(hitPoint);
+            V = s->getCamera()->getLocation()->substract(hitPoint);
             V->normalize();
 
-            radiance = this->BRDF(e->getObject(nearest)->getMaterial(), *N[nearest], L, V);	  
+            radiance = this->BRDF(s->getObject(nearest)->getMaterial(), *N[nearest], L, V);	  
         }
 	}
 	else
-		radiance[0] = radiance[1] = radiance[2] = 0;
-
-	for (unsigned int k = 0; k < numberObjects; k++)
-		delete(N[k]);
+        radiance = Color(0, 0, 0);
 
 	return(radiance);
 }
-
-
-/*---------------------------------------------------------*/
