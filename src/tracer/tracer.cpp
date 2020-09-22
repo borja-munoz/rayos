@@ -11,7 +11,6 @@ Tracer::Tracer()
 	this->getRandomNumber = getRandomNumberMT;
 }
 
-
 Tracer::Tracer(BRDFtype t)
 {
 	switch(t)
@@ -29,26 +28,25 @@ Tracer::Tracer(BRDFtype t)
 
 // Trace a ray in the scene and returns information about the hitpoint:
 // Point, object and normal
-HitPoint * Tracer::getHitPoint(Ray *r, Scene *e)
+std::shared_ptr<HitPoint> Tracer::getHitPoint(std::shared_ptr<Ray> r, 
+                                              std::shared_ptr<Scene> s)
 {
-	HitPoint *h = new HitPoint;
+	std::shared_ptr<HitPoint> h = std::make_shared<HitPoint>();
 	unsigned int numberObjects, i, j;
-	real *intersection;
-	vector<Vector3D *> *normal;
+	vector<real> intersection;
+	vector<std::shared_ptr<Vector3D>> normal;
 	Vector3D N;
-	Primitive *object;
+	std::shared_ptr<Primitive> object;
 	  
 	// We intersect the ray with all the objects
     // and select the one with the nearest intersection
 
-	numberObjects = e->getNumberObjects();
-	intersection = new real[numberObjects];
-	normal = new vector<Vector3D *>;
+	numberObjects = s->getNumberObjects();
 	for (i = 0; i < numberObjects; i++)
 	{    
-		object = (*(e->object))[i];
-		intersection[i] = object->intersect(r, N);
-		normal->push_back(new Vector3D(N));
+		object = s->object[i];
+		intersection.push_back(object->intersect(r, N));
+		normal.push_back(std::make_shared<Vector3D>(N.getX(), N.getY(), N.getZ()));
 	}
 
 	int nearest = -1;
@@ -67,19 +65,12 @@ HitPoint * Tracer::getHitPoint(Ray *r, Scene *e)
 		// Calculate hitpoint, object and normal
 		h->hitPoint = r->pointParametric(intersection[nearest]);
 		h->nearestObject = nearest;
-		h->normal = new Vector3D(*((*normal)[nearest]));
+		h->normal = normal[nearest];
 		h->normal->normalize();
 	}
 	else
 		h = 0;
 
-	for (i = 0; i < numberObjects; i++)
-		delete((*normal)[i]);
-	delete(normal);
-	delete[](intersection);
-
 	return(h);
 }
 
-
-//-------------------------------------------------------------------------------
