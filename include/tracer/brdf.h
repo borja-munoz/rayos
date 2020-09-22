@@ -4,6 +4,8 @@
 #include "../util/light.h"
 #include "../util/material.h"
 
+#include <memory>
+
 // Types
 typedef enum
 {
@@ -15,7 +17,13 @@ typedef enum
 } BRDFtype;
 
 // Prototypes
-real *PhongBRDF(Material *m, Vector3D N, Vector3D *L, Vector3D *V);
-real *BlinnBRDF(Material *m, Vector3D N, Vector3D *L, Vector3D *V);
+Color PhongBRDF(std::shared_ptr<Material> m, 
+                Vector3D N, 
+                std::shared_ptr<Vector3D> L, 
+                std::shared_ptr<Vector3D> V);
+Color BlinnBRDF(std::shared_ptr<Material> m, 
+                Vector3D N, 
+                std::shared_ptr<Vector3D> L, 
+                std::shared_ptr<Vector3D> V);
 
 #endif

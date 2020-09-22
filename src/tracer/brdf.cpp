@@ -1,15 +1,18 @@
 #include "brdf.h"
 
-/*--------------------------------------------------------*/
-/* Bui T. Phong BRDF                                      */
-/*--------------------------------------------------------*/
-real *PhongBRDF(Material *mat, Vector3D N, Vector3D *L, Vector3D *V)
+// Bui T. Phong BRDF                                      
+Color PhongBRDF(std::shared_ptr<Material> mat, 
+                Vector3D N, 
+                std::shared_ptr<Vector3D> L, 
+                std::shared_ptr<Vector3D> V)
 {
-	Vector3D *R, *aux;
+	std::shared_ptr<Vector3D> R, aux;
 	real ka, kd, ks;
-	real *colorLight, intensityLight, *colorMat;
+	Color colorLight;
+    std::shared_ptr<Color> colorMat;
+    real intensityLight;
 	double NL, RV;
-	real *radiance = new real[3];
+	Color radiance;
 
 	// Ambient, diffuse and specular components
 	ka = mat->getKa();
@@ -18,8 +21,7 @@ real *PhongBRDF(Material *mat, Vector3D N, Vector3D *L, Vector3D *V)
 
 	colorMat = mat->getColor();
 
-	colorLight = new real[3];
-	colorLight[0] = colorLight[1] = colorLight[2] = 1.0f;
+	colorLight = Color(1.0, 1.0, 1.0);
 	intensityLight = 1.0f;   
 
 	// Vector for diffuse component
@@ -33,41 +35,32 @@ real *PhongBRDF(Material *mat, Vector3D N, Vector3D *L, Vector3D *V)
 		RV = 0.0;
     else
         RV = (real) pow(RV, 0.5);     // RV^0.5
-	delete(R);
-	delete(aux);
 
     if (NL < 0.0)
         NL = 0.0;
 
     // We calculate the final color taking into account both diffuse and specular components
-    radiance[0] = (colorLight[0] * intensityLight * colorMat[0]) * 
-                   (kd * NL + ks * RV);
-    radiance[1] = (colorLight[1] * intensityLight * colorMat[1]) * 
-                   (kd * NL + ks * RV);
-    radiance[2] = (colorLight[2] * intensityLight * colorMat[2]) *
-                   (kd * NL + ks * RV);
-
-	delete[](colorLight);
-	delete[](colorMat);
+    /*
+    radiance = Color((colorLight.getR() * intensityLight * colorMat.getR()) * (kd * NL + ks * RV),
+                     (colorLight.getG() * intensityLight * colorMat.getG()) * (kd * NL + ks * RV),
+                     (colorLight.getB() * intensityLight * colorMat.getB()) * (kd * NL + ks * RV));
+    */
+    radiance = colorLight * intensityLight * (*colorMat) * (kd * NL + ks * RV);
 
 	return(radiance);
 }
 
-
-/*--------------------------------------------------------*/
-
-/*--------------------------------------------------------*/
-/* Jim Blinn BRDF                                         */
-/*--------------------------------------------------------*/
-real *BlinnBRDF(Material *m, Vector3D N, Vector3D *L, Vector3D *V)
+// Jim Blinn BRDF                                         
+Color BlinnBRDF(std::shared_ptr<Material> mat, 
+                Vector3D N, 
+                std::shared_ptr<Vector3D> L, 
+                std::shared_ptr<Vector3D> V)
 {
-	real *radiance = new real[3];
+	Color radiance;
 
 	// Not finished, only to avoid warnings
-	radiance[0] = N.dotProduct(L) + L->dotProduct(V) + m->getKa();
+	//radiance[0] = N.dotProduct(L) + L->dotProduct(V) + mat->getKa();
+    radiance = Color();
 
 	return(radiance);
 }
-
-
-/*--------------------------------------------------------*/
