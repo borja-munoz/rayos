@@ -1,56 +1,137 @@
 #include "scene.h"
 
+// Traverse the PBRT scene recursively
+void Scene::traversePBRT(std::shared_ptr<pbrt::Object> object)
+{
+    const bool firstTime = (alreadyTraversed.find(object) == alreadyTraversed.end());
+    alreadyTraversed.insert(object);
 
-//-------------------------------------------------------------------------------
+    //numObjects.add(firstTime,1);
+    //numLights.add(firstTime,object->lightSources.size());
 
-// Default scene
+    for (auto light : object->lightSources) 
+    {
+        if (light->as<pbrt::PointLightSource>())
+        {
+            this->light.push_back(std::make_shared<PointLight>());
+            //numPointLights.add(firstTime,1);
+        }
+        if (light->as<pbrt::SpotLightSource>())
+        {
+            //numSpotLights.add(firstTime,1);
+        }
+        if (light->as<pbrt::InfiniteLightSource>())
+        {
+            //numInfiniteLights.add(firstTime,1);
+        }    
+        if (light->as<pbrt::DistantLightSource>())
+        {
+            //numDistantLights.add(firstTime,1);
+        }
+    }
 
+    //numShapes.add(firstTime,object->shapes.size());
+
+    for (auto shape : object->shapes) 
+    {
+        usedMaterials.insert(shape->material);
+        if (shape->areaLight) 
+        {
+            //numAreaLights.add(firstTime,1);
+            this->light.push_back(std::make_shared<RectLight>());
+        }
+        if (std::shared_ptr<pbrt::TriangleMesh> mesh=std::dynamic_pointer_cast<pbrt::TriangleMesh>(shape))
+        {
+            this->object.push_back(std::make_shared<TriangleMesh>());
+            //numTriangles.add(firstTime,mesh->index.size());
+        } 
+        else if (std::shared_ptr<pbrt::QuadMesh> mesh=std::dynamic_pointer_cast<pbrt::QuadMesh>(shape))
+        {
+            //numQuads.add(firstTime,mesh->index.size());
+        } 
+        else if (std::shared_ptr<pbrt::Sphere> sphere=std::dynamic_pointer_cast<pbrt::Sphere>(shape))
+        {
+            this->object.push_back(std::make_shared<Sphere>());
+            //numSpheres.add(firstTime,1);
+        } 
+        else if (std::shared_ptr<pbrt::Disk> disk=std::dynamic_pointer_cast<pbrt::Disk>(shape))
+        {
+            //numDisks.add(firstTime,1);
+        } 
+        else if (std::shared_ptr<pbrt::Curve> curves=std::dynamic_pointer_cast<pbrt::Curve>(shape))
+        {
+            //numCurves.add(firstTime,1);
+        } 
+        else
+            std::cout << "un-handled geometry type : " << shape->toString() << std::endl;
+    }
+
+    //numInstances.add(firstTime,object->instances.size());
+    for (auto inst : object->instances) 
+    {
+        this->traversePBRT(inst->object);
+    }
+}
+
+// Default scene (Cornell Box)
 Scene::Scene()
 {
-	Point3D *a, *b, *c, *d;
-	Quad *lightObject;
+    this->createCornellBox();
+}
 
-	this->camera = new Camera();
+void Scene::createCornellBox()
+{
+	std::shared_ptr<Point3D> a, b, c, d;
+	std::shared_ptr<Quad> lightObject;
+
+	this->camera = std::make_shared<Camera>();
 
 	// Light
-	a = new Point3D(-0.5, 2.0, -2.75);
-	b = new Point3D(-0.5, 2.0, -3.25);
-	c = new Point3D(0.5, 2.0, -3.25);
-	d = new Point3D(0.5, 2.0, -2.75);
+	a = std::make_shared<Point3D>(-0.5, 2.0, -2.75);
+	b = std::make_shared<Point3D>(-0.5, 2.0, -3.25);
+	c = std::make_shared<Point3D>(0.5, 2.0, -3.25);
+	d = std::make_shared<Point3D>(0.5, 2.0, -2.75);
 	
 	/*a = new Point3D(-0.5, 0.0, 3.00);
 	b = new Point3D(-0.5, 0.0, 3.00);
 	c = new Point3D(0.5, 0.0, 3.00);
 	d = new Point3D(0.5, 0.0, 3.00);*/
 
-    // Lights
-    this->light = new vector<Light *>;
-
     // Light object
-    Material *mat = new Material();
-	real *colorMat = new real[3];
-	colorMat[0] = 1.0f;  colorMat[1] = 1.0f;  colorMat[2] = 1.0f;
-	mat->set(colorMat, 1.0, 1.0, 0.0, 1.0);
-	lightObject = new Quad(a, b, c, d, mat);  // Defaults to white color
+    std::shared_ptr<Material> mat = std::make_shared<Material>();
+	mat->set(std::make_shared<Color>(1.0, 1.0, 1.0), 
+             1.0, 1.0, 0.0, 1.0);
+	lightObject = std::make_shared<Quad>(a, b, c, d, mat);  // Defaults to white color
 
     // Light source
-	RectLight *lightTecho = new RectLight();
+	std::shared_ptr<RectLight> lightTecho = std::make_shared<RectLight>();
 	lightTecho->setLocation(lightObject);
-	this->light->push_back(lightTecho);
+	this->light.push_back(lightTecho);
 
 	// Objects (including lights)
-	this->object = new vector<Primitive *>;
+	this->object.push_back(lightObject);
 
-	this->object->push_back(lightObject);
+    // Cornell Box
+	this->object.push_back(this->cbLeftWall());
+	this->object.push_back(this->cbRightWall());
+	this->object.push_back(this->cbBackWall());
+	this->object.push_back(this->cbCeiling());
+	this->object.push_back(this->cbFloor());
 
-	// Sphere
-	Point3D *center = new Point3D(0, 0, -3.0);
-    mat = new Material();
-	colorMat[0] = 1.0f;  colorMat[1] = 0.2f;  colorMat[2] = 1.0f;
-	mat->set(colorMat, 1.0, 0.5, 0.5, 0.0);
-	this->object->push_back(new Sphere(center, 0.5, mat));
+    std::vector<std::shared_ptr<Quad>> shortBox = this->cbShortBox();
+    this->object.insert(this->object.end(), shortBox.begin(), shortBox.end());
 
-	// Tri�ngle
+    std::vector<std::shared_ptr<Quad>> tallBox = this->cbTallBox();
+    this->object.insert(this->object.end(), tallBox.begin(), tallBox.end());
+
+    // Sphere
+	//std::shared_ptr<Point3D> center = std::make_shared<Point3D>(0, 0, -3.0);
+    //mat = std::make_shared<Material>();
+    //mat->set(std::make_shared<Color>(1.0, 0.2, 1.0), 
+    //         1.0, 0.5, 0.5, 0.0);
+	//this->object.push_back(std::make_shared<Sphere>(center, 0.5, mat));
+
+	// Triangle
 	//a = new Point3D(0.0, 1.0, -2.5);
 	//b = new Point3D(-0.5, -1.0, -3.0);
 	//c = new Point3D(0.5, -1.0, -3.0);
@@ -65,177 +146,277 @@ Scene::Scene()
 
 	// Box
 	//vector<Triangle *> *t;
+}
 
-	// Left wall
-	a = new Point3D(-2.0, -2.0, -2.0);
-	b = new Point3D(-2.0, -2.0, -4.0);
-	c = new Point3D(-2.0, 2.0, -4.0);
-	d = new Point3D(-2.0, 2.0, -2.0);
-	mat = new Material();
-	colorMat[0] = 1.0f;  colorMat[1] = 0.2f;  colorMat[2] = 0.2f;
-	mat->set(colorMat, 1.0, 0.5, 0.5, 0.0);
+std::shared_ptr<Quad> Scene::cbLeftWall()
+{
+	std::shared_ptr<Point3D> a, b, c, d;
+	std::shared_ptr<Material> mat;
+
+	a = std::make_shared<Point3D>(-2.0, -2.0, -2.0);
+	b = std::make_shared<Point3D>(-2.0, -2.0, -4.0);
+	c = std::make_shared<Point3D>(-2.0, 2.0, -4.0);
+	d = std::make_shared<Point3D>(-2.0, 2.0, -2.0);
+	mat = std::make_shared<Material>();
+    mat->set(std::make_shared<Color>(1.0, 0.2, 0.2), 
+             1.0, 0.5, 0.5, 0.0);
+
 	//t = (new Quad(a, b, c, d, mat))->tessellate();
 	//this->object->push_back((*t)[0]);
 	//this->object->push_back((*t)[1]);
-	this->object->push_back(new Quad(a, b, c, d, mat));
 
-	// Background wall
-	a = new Point3D(-2.0, -2.0, -4.0);
-	b = new Point3D(2.0, -2.0, -4.0);
-	c = new Point3D(2.0, 2.0, -4.0);
-	d = new Point3D(-2.0, 2.0, -4.0);
-	mat = new Material();
-	colorMat[0] = 0.1f;  colorMat[1] = 0.8f;  colorMat[2] = 0.1f;
-	mat->set(colorMat, 1.0, 0.5, 0.5, 0.0);
-	this->object->push_back(new Quad(a, b, c, d, mat));
-
-	// Right wall
-	a = new Point3D(2.0, -2.0, -4.0);
-	b = new Point3D(2.0, -2.0, -2.0);
-	c = new Point3D(2.0, 2.0, -2.0);
-	d = new Point3D(2.0, 2.0, -4.0);
-	mat = new Material();
-	colorMat[0] = 0.2f;  colorMat[1] = 0.2f;  colorMat[2] = 1.0f;
-	mat->set(colorMat, 1.0, 0.5, 0.5, 0.0);
-	this->object->push_back(new Quad(a, b, c, d, mat));
-
-	// Ceiling
-	a = new Point3D(-2.0, 2.0, -2.0);
-	b = new Point3D(-2.0, 2.0, -4.0);
-	c = new Point3D(2.0, 2.0, -4.0);
-	d = new Point3D(2.0, 2.0, -2.0);
-	mat = new Material();
-	colorMat[0] = 1.0f;  colorMat[1] = 1.0f;  colorMat[2] = 1.0f;
-	mat->set(colorMat, 1.0, 0.5, 0.5, 0.0);
-	this->object->push_back(new Quad(a, b, c, d, mat));
-
-	// Floor
-	a = new Point3D(-2.0, -2.0, -2.0);
-	b = new Point3D(2.0, -2.0, -2.0);
-	c = new Point3D(2.0, -2.0, -4.0);
-	d = new Point3D(-2.0, -2.0, -4.0);
-	mat = new Material();
-	colorMat[0] = 0.2f;  colorMat[1] = 1.0f;  colorMat[2] = 0.2f;
-	mat->set(colorMat, 1.0, 0.5, 0.5, 0.0);
-	this->object->push_back(new Quad(a, b, c, d, mat));
-		  
+	return(std::make_shared<Quad>(a, b, c, d, mat));
 }
 
-
-//-------------------------------------------------------------------------------
-
-Scene::~Scene()
+std::shared_ptr<Quad> Scene::cbBackWall()
 {
-	unsigned int numberObjects, numeroLuces;
+	std::shared_ptr<Point3D> a, b, c, d;
+	std::shared_ptr<Material> mat;
 
-	numberObjects = this->object->size();
-	for (unsigned int i = 0; i < numberObjects; i++)
-		delete((*(this->object))[i]);
-	delete(this->object);
+	a = std::make_shared<Point3D>(-2.0, -2.0, -4.0);
+	b = std::make_shared<Point3D>(2.0, -2.0, -4.0);
+	c = std::make_shared<Point3D>(2.0, 2.0, -4.0);
+	d = std::make_shared<Point3D>(-2.0, 2.0, -4.0);
+	mat = std::make_shared<Material>();
+    mat->set(std::make_shared<Color>(1.0, 1.0, 1.0), 
+             1.0, 0.5, 0.5, 0.0);
 
-	numeroLuces = this->light->size();
-	for (unsigned int i = 0; i < numeroLuces; i++)
-		delete((*(this->light))[i]);
-	delete(this->light);
+	return(std::make_shared<Quad>(a, b, c, d, mat));
+}
 
-	delete(this->camera);
+std::shared_ptr<Quad> Scene::cbRightWall()
+{
+	std::shared_ptr<Point3D> a, b, c, d;
+	std::shared_ptr<Material> mat;
+
+	a = std::make_shared<Point3D>(2.0, -2.0, -4.0);
+	b = std::make_shared<Point3D>(2.0, -2.0, -2.0);
+	c = std::make_shared<Point3D>(2.0, 2.0, -2.0);
+	d = std::make_shared<Point3D>(2.0, 2.0, -4.0);
+	mat = std::make_shared<Material>();
+    mat->set(std::make_shared<Color>(0.1, 0.8, 0.1), 
+             1.0, 0.5, 0.5, 0.0);
+
+	return(std::make_shared<Quad>(a, b, c, d, mat));
+}
+
+std::shared_ptr<Quad> Scene::cbCeiling()
+{
+	std::shared_ptr<Point3D> a, b, c, d;
+	std::shared_ptr<Material> mat;
+
+	a = std::make_shared<Point3D>(-2.0, 2.0, -2.0);
+	b = std::make_shared<Point3D>(-2.0, 2.0, -4.0);
+	c = std::make_shared<Point3D>(2.0, 2.0, -4.0);
+	d = std::make_shared<Point3D>(2.0, 2.0, -2.0);
+	mat = std::make_shared<Material>();
+    mat->set(std::make_shared<Color>(1.0, 1.0, 1.0),
+             1.0, 0.5, 0.5, 0.0);
+
+	return(std::make_shared<Quad>(a, b, c, d, mat));
+}
+
+std::shared_ptr<Quad> Scene::cbFloor()
+{
+	std::shared_ptr<Point3D> a, b, c, d;
+	std::shared_ptr<Material> mat;
+
+	a = std::make_shared<Point3D>(-2.0, -2.0, -2.0);
+	b = std::make_shared<Point3D>(2.0, -2.0, -2.0);
+	c = std::make_shared<Point3D>(2.0, -2.0, -4.0);
+	d = std::make_shared<Point3D>(-2.0, -2.0, -4.0);
+	mat = std::make_shared<Material>();
+    mat->set(std::make_shared<Color>(1.0, 1.0, 1.0), 
+             1.0, 0.5, 0.5, 0.0);
+
+	return(std::make_shared<Quad>(a, b, c, d, mat));
+}
+
+std::vector<std::shared_ptr<Quad>> Scene::cbShortBox()
+{
+    std::vector<std::shared_ptr<Quad>> box;
+	std::shared_ptr<Point3D> a, b, c, d;
+	std::shared_ptr<Material> mat;
+
+    // Front
+	a = std::make_shared<Point3D>(0, -2.0, -2.5);
+	b = std::make_shared<Point3D>(0, -1.0, -2.5);
+	c = std::make_shared<Point3D>(1.5, -1.0, -2.25);
+	d = std::make_shared<Point3D>(1.5, -2.0, -2.25);
+	mat = std::make_shared<Material>();
+    mat->set(std::make_shared<Color>(1.0, 1.0, 1.0), 
+             1.0, 0.5, 0.5, 0.0);
+    box.push_back(std::make_shared<Quad>(a, b, c, d, mat));
+
+    // Right
+	a = std::make_shared<Point3D>(1.5, -2.0, -2.25);
+	b = std::make_shared<Point3D>(1.5, -1.0, -2.25);
+	c = std::make_shared<Point3D>(1.6, -1.0, -2.75);
+	d = std::make_shared<Point3D>(1.6, -2.0, -2.75);
+	mat = std::make_shared<Material>();
+    mat->set(std::make_shared<Color>(1.0, 1.0, 1.0), 
+             1.0, 0.5, 0.5, 0.0);
+    box.push_back(std::make_shared<Quad>(a, b, c, d, mat));
+
+    // Top
+	a = std::make_shared<Point3D>(0, -1.0, -2.5);
+	b = std::make_shared<Point3D>(1.5, -1.0, -2.25);
+	c = std::make_shared<Point3D>(1.6, -1.0, -2.75);
+	d = std::make_shared<Point3D>(0.1, -1.0, -3.0);
+	mat = std::make_shared<Material>();
+    mat->set(std::make_shared<Color>(1.0, 1.0, 1.0), 
+             1.0, 0.5, 0.5, 0.0);
+    box.push_back(std::make_shared<Quad>(a, b, c, d, mat));
+
+    return(box);
+}
+
+std::vector<std::shared_ptr<Quad>> Scene::cbTallBox()
+{
+    std::vector<std::shared_ptr<Quad>> box;
+	std::shared_ptr<Point3D> a, b, c, d;
+	std::shared_ptr<Material> mat;
+
+    return(box);
+
+    // Front
+	a = std::make_shared<Point3D>(0, -2.0, -2.25);
+	b = std::make_shared<Point3D>(0, -1.0, -2.25);
+	c = std::make_shared<Point3D>(1.75, -1.0, -2.15);
+	d = std::make_shared<Point3D>(1.75, -2.0, -2.15);
+	mat = std::make_shared<Material>();
+    mat->set(std::make_shared<Color>(1.0, 1.0, 1.0), 
+             1.0, 0.5, 0.5, 0.0);
+    box.push_back(std::make_shared<Quad>(a, b, c, d, mat));
+
+    // Right
+	a = std::make_shared<Point3D>(1.75, -2.0, -2.15);
+	b = std::make_shared<Point3D>(1.75, -1.0, -2.15);
+	c = std::make_shared<Point3D>(1.8, -1.0, -2.5);
+	d = std::make_shared<Point3D>(1.8, -2.0, -2.5);
+	mat = std::make_shared<Material>();
+    mat->set(std::make_shared<Color>(1.0, 1.0, 1.0), 
+             1.0, 0.5, 0.5, 0.0);
+    box.push_back(std::make_shared<Quad>(a, b, c, d, mat));
+
+    // Top
+	a = std::make_shared<Point3D>(0, -1.0, -2.25);
+	b = std::make_shared<Point3D>(1.75, -1.0, -2.15);
+	c = std::make_shared<Point3D>(1.8, -1.0, -2.5);
+	d = std::make_shared<Point3D>(0.15, -1.0, -2.65);
+	mat = std::make_shared<Material>();
+    mat->set(std::make_shared<Color>(1.0, 1.0, 1.0), 
+             1.0, 0.5, 0.5, 0.0);
+    box.push_back(std::make_shared<Quad>(a, b, c, d, mat));
+
+    return(box);
 }
 
 
-//-------------------------------------------------------------------------------
+// Read scene information from a file
+// Currently only PBRT files are supported through the pbrt-parser library
+// https://github.com/ingowald/pbrt-parser
+Scene::Scene(const std::string filename)
+{
+    std::shared_ptr<pbrt::Scene> scene;
+
+    scene = pbrt::importPBRT(filename);
+
+    scene->makeSingleLevel();
+    
+    this->traversePBRT(scene->world);
+
+    cout << "This scene has " << this->light.size() << " lights\n";
+    cout << "This scene has " << this->object.size() << " objects\n";
+    /*
+    Scene::SP scene = SemanticParser(pbrt).result;
+    createFilm(scene,pbrt);
+    for (auto cam : pbrt->cameras)
+      scene->cameras.push_back(createCamera(cam));
+    //return scene;
+    */
+
+    // Camera
+	this->camera = std::make_shared<Camera>();
+
+}
 
 unsigned int Scene::getNumberObjects(void)
 {
-	return(this->object->size());
+	return(this->object.size());
 }
 
-
-//-------------------------------------------------------------------------------
-
-Primitive * Scene::getObject(unsigned int objectIndex)
+std::shared_ptr<Primitive> Scene::getObject(unsigned int objectIndex)
 {
-	if ((objectIndex >= 0) && (objectIndex < this->object->size()))
-		return((*(this->object))[objectIndex]->copy());
+	if ((objectIndex >= 0) && (objectIndex < this->object.size()))
+		return(this->object[objectIndex]);
   
 	return(0);
 }
-
-
-//-------------------------------------------------------------------------------
 
 unsigned int Scene::getNumberLights(void)
 {
-	return(this->light->size());
+	return(this->light.size());
 }
 
-
-//-------------------------------------------------------------------------------
-
-Light * Scene::getLight(unsigned int lightIndex)
+std::shared_ptr<Light> Scene::getLight(unsigned int lightIndex)
 {
-	if ((lightIndex >= 0) && (lightIndex < this->object->size()))
-		return((*(this->light))[lightIndex]->copy());
+	if ((lightIndex >= 0) && (lightIndex < this->object.size()))
+		return(this->light[lightIndex]);
   
 	return(0);
 }
 
-
-//-------------------------------------------------------------------------------
-
-Camera * Scene::getCamera(void)
+std::shared_ptr<Camera> Scene::getCamera(void)
 {
-	return(new Camera(*(this->camera)));
+	return(this->camera);
 }
 
-
-//-------------------------------------------------------------------------------
-
-bool Scene::mutuallyVisible(Point3D *p, Point3D *q)
+bool Scene::mutuallyVisible(std::shared_ptr<Point3D> p, std::shared_ptr<Point3D> q)
 {
 	unsigned int numberObjects;
 	real distance, intersection;
 	bool visible = true;
-	Ray *r;
-	Vector3D *lineOfSight, N;
-	Primitive *object;
+	std::shared_ptr<Ray> r;
+	std::shared_ptr<Vector3D> lineOfSight;
+    Vector3D N;
+	std::shared_ptr<Primitive> object;
 
-	// Construimos la l�nea de visi�n entre los dos puntos
+	// We build the line of sight between the two points
 	lineOfSight = q->substract(p);
 	distance = lineOfSight->length();
 	lineOfSight->normalize();
 
-	// Creamos el rayo correspondiente
-	r = new Ray(p, lineOfSight);
+	// We create the ray with origin in the first point 
+    // and pointing towards the second point
+	r = std::make_shared<Ray>(p, lineOfSight);
 
-	// Intersecci�n con los diferentes object
-	numberObjects = this->object->size();
+	numberObjects = this->object.size();
 
+	// Intersection with the different objects
     // We start at 1 to avoid light intersection
     // We must change it in the future
 	for (unsigned int i = 1; i < numberObjects; i++)
 	{    
-		object = (*(this->object))[i];
+		object = this->object[i];
 		intersection = object->intersect(r, N);
 
         // If the hitpoint distance is smaller than the distance
         // between the two points, there is an object between them and
         // they are not visible
-		if (intersection > 0)
+		if ((intersection > 0) && (!ZERO(intersection)))
 			if (intersection < distance)
+            {
+                //cout << "Object Index = " << i << " --- Intersection = " << intersection << " --- Distance = " << distance << "\n";
 				if (!ZERO(intersection - distance))
 				{
 					visible = false;
 					break;
 				}
+            }
 	}
-
-	delete(lineOfSight);
-	delete(r);
 
 	return(visible);
 }
-
-
-//-------------------------------------------------------------------------------
 
 
