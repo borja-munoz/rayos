@@ -19,41 +19,11 @@ Point3D::Point3D(const Point3D &p)
   this->z = p.z;
 }
 
-real Point3D::getX(void)
-{
-  return(this->x);
-}
-
-real Point3D::getY(void)
-{
-  return(this->y);
-}
-
-real Point3D::getZ(void)
-{
-  return(this->z);
-}
-
-void Point3D::setX(real x)
-{
-  this->x = x;
-}
-
-void Point3D::setY(real y)
-{
-  this->y = y;
-}
-
-void Point3D::setZ(real z)
-{
-  this->z = z;
-}
-
 std::shared_ptr<Point3D> Point3D::sum(std::shared_ptr<Vector3D> v)
 {
-  return(std::make_shared<Point3D>(this->x + v->getX(),
-                                   this->y + v->getY(),
-                                   this->z + v->getZ()));
+  return(std::make_shared<Point3D>(this->x + v->x,
+                                   this->y + v->y,
+                                   this->z + v->z));
 }
 
 std::shared_ptr<Vector3D> Point3D::substract(std::shared_ptr<Point3D> p)

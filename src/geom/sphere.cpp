@@ -69,9 +69,9 @@ real Sphere::intersect(std::shared_ptr<Ray> r, Vector3D &normal)
         //n = this->center->substract(intersection);
         n = n->product(1.0 / this->radius);
 
-        normal.setX(n->getX());
-        normal.setY(n->getY());
-        normal.setZ(n->getZ());
+        normal.x = n->x;
+        normal.y = n->y;
+        normal.z = n->z;
         normal.normalize();
 
         return(t);

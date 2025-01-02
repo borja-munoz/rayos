@@ -45,16 +45,16 @@ Quad::Quad(std::shared_ptr<Point3D> a,
 	  
 	// We calculate the greater normal vector component (absolute value)
 	// to choose which plane we project to (the one that maximizes the projected region) 
-	if (fabs(this->normal->getX()) > fabs(this->normal->getY()))
+	if (fabs(this->normal->x) > fabs(this->normal->y))
 	{
-		if (fabs(this->normal->getX()) > fabs(this->normal->getZ()))
+		if (fabs(this->normal->x) > fabs(this->normal->z))
 			this->greaterNormalComponent = 'X';
 		else
 			this->greaterNormalComponent = 'Z';
 	}
 	else
 	{
-		if (fabs(this->normal->getY()) > fabs(this->normal->getZ()))
+		if (fabs(this->normal->y) > fabs(this->normal->z))
 			this->greaterNormalComponent = 'Y';
 		else
 			this->greaterNormalComponent = 'Z';
@@ -85,16 +85,16 @@ Quad::Quad(std::shared_ptr<Point3D> a,
 	  
 	// We calculate the greater normal vector component (absolute value)
 	// to choose which plane we project to (the one that maximizes the projected region) 
-	if (fabs(this->normal->getX()) > fabs(this->normal->getY()))
+	if (fabs(this->normal->x) > fabs(this->normal->y))
 	{
-		if (fabs(this->normal->getX()) > fabs(this->normal->getZ()))
+		if (fabs(this->normal->x) > fabs(this->normal->z))
 			this->greaterNormalComponent = 'X';
 		else
 			this->greaterNormalComponent = 'Z';
 	}
 	else
 	{
-		if (fabs(this->normal->getY()) > fabs(this->normal->getZ()))
+		if (fabs(this->normal->y) > fabs(this->normal->z))
 			this->greaterNormalComponent = 'Y';
 		else
 			this->greaterNormalComponent = 'Z';
@@ -212,9 +212,9 @@ real Quad::intersect(std::shared_ptr<Ray> r, Vector3D &normal)
 	// We have an intersection if the number of crosses is odd
 	if (crosses & 1)      
     {
-		normal.setX(this->normal->getX());
-		normal.setY(this->normal->getY());
-		normal.setZ(this->normal->getZ());
+		normal.x = this->normal->x;
+		normal.y = this->normal->y;
+		normal.z = this->normal->z;
 
 		return(t); 
     }

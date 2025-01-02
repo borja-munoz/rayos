@@ -9,23 +9,17 @@
 
 class Vector3D
 {
-	real x;
-	real y;
-	real z;
-  
   public:
- 
+
+    real x;
+    real y;
+    real z;
+  
     /*
 	Vector3D();
 	Vector3D(real x, real y, real z);
 	Vector3D(const Vector3D &v);
 	~Vector3D();
-	real getX(void) const;
-	real getY(void) const;
-	real getZ(void) const;
-	void setX(real x);
-	void setY(real y);
-	void setZ(real z);
 	real dotProduct(Vector3D *v) const;
 	Vector3D *crossProduct(Vector3D *v) const;
 	real length(void) const;
@@ -57,36 +51,6 @@ class Vector3D
     ~Vector3D()
     {
 
-    }
-
-    inline real getX(void) const
-    {
-        return(this->x);
-    }
-
-    inline real getY(void) const
-    {
-        return(this->y);
-    }
-
-    inline real getZ(void) const
-    {
-        return(this->z);
-    }
-
-    inline void setX(real x)
-    {
-        this->x = x;
-    }
-
-    inline void setY(real y)
-    {
-        this->y = y;
-    }
-
-    inline void setZ(real z)
-    {
-        this->z = z;
     }
 
     inline real dotProduct(std::shared_ptr<Vector3D> v) const

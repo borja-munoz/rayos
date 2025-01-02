@@ -42,25 +42,25 @@ std::shared_ptr<Point3D> RectLight::getSamplePoint(void)
 	coordinates = this->location->getCoordinates();
 
 	p = coordinates[0];
-	aux1 = std::make_shared<Vector3D>(p->getX(), p->getY(), p->getZ());
+	aux1 = std::make_shared<Vector3D>(p->x, p->y, p->z);
 	aux2 = aux1->product((1 - xi) * (1 - eta));  // aux2 = (1-xi)(1-eta)A
 
 	p = coordinates[1];
-	aux1 = std::make_shared<Vector3D>(p->getX(), p->getY(), p->getZ());
+	aux1 = std::make_shared<Vector3D>(p->x, p->y, p->z);
 	aux3 = aux1->product((1 + xi) * (1 - eta));
 	aux1 = aux2->sum(aux3);					  // aux1 = (1-xi)(1-eta)A + (1+xi)(1-eta)B
 
 	p = coordinates[2];
-	aux2 = std::make_shared<Vector3D>(p->getX(), p->getY(), p->getZ());
+	aux2 = std::make_shared<Vector3D>(p->x, p->y, p->z);
 	aux3 = aux2->product((1 + xi) * (1 + eta));
 	aux2 = aux1->sum(aux3);					  // aux2 = (1-xi)(1-eta)A + (1+xi)(1-eta)B + (1+xi)(1+eta)C
 
 	p = coordinates[3];
-	aux1 = std::make_shared<Vector3D>(p->getX(), p->getY(), p->getZ());
+	aux1 = std::make_shared<Vector3D>(p->x, p->y, p->z);
 	aux3 = aux1->product((1 - xi) * (1 + eta));
 	aux1 = aux2->sum(aux3);				  
 
-	samplePoint = std::make_shared<Point3D>(aux1->getX() / 4, aux1->getY() / 4, aux1->getZ() / 4);
+	samplePoint = std::make_shared<Point3D>(aux1->x / 4, aux1->y / 4, aux1->z / 4);
 
 	return(samplePoint);
 }
