@@ -12,12 +12,14 @@
             "program": "${workspaceFolder}/bin/rayos",
             //"args": ["s", "1", "1", "pbrt/cornell_box.pbrt"],
             "args": ["s", "1", "1"],
-            "stopAtEntry": true,
+            //"stopAtEntry": false,
             //"stopOnEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false,
             "MIMode": "lldb",
+            // "miDebuggerPath": "/usr/local/bin/gdb",
+            // "MIMode": "gdb",
             "preLaunchTask": "Makefile"
         }
     ]
