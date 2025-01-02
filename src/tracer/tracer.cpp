@@ -1,4 +1,5 @@
 #include "tracer.h"
+#include "util/chrono.h"
 
 
 Tracer::Tracer()
@@ -39,14 +40,14 @@ std::shared_ptr<HitPoint> Tracer::getHitPoint(std::shared_ptr<Ray> r,
 	std::shared_ptr<Primitive> object;
 	  
 	// We intersect the ray with all the objects
-    // and select the one with the nearest intersection
+  // and select the one with the nearest intersection
 
 	numberObjects = s->getNumberObjects();
 	for (i = 0; i < numberObjects; i++)
 	{    
 		object = s->object[i];
 		intersection.push_back(object->intersect(r, N));
-		normal.push_back(std::make_shared<Vector3D>(N.getX(), N.getY(), N.getZ()));
+		normal.push_back(std::make_shared<Vector3D>(N.x, N.y, N.z));
 	}
 
 	int nearest = -1;
@@ -74,3 +75,8 @@ std::shared_ptr<HitPoint> Tracer::getHitPoint(std::shared_ptr<Ray> r,
 	return(h);
 }
 
+
+TimeStats Tracer::getTimeStats()
+{
+  return(this->timeStats);
+}
