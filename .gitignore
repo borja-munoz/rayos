@@ -39,3 +39,6 @@ callgrind/
 output/
 pbrt/
 bin/rayos
+
+callgrind*
+xtmemory*
