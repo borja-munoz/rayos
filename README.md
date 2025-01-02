@@ -83,10 +83,25 @@ There is a `getEyeRay` method for getting an eye ray for non-stochastic algorith
 
 ## ToDo
 
-- [ ] Include the light as a visible object (white)
+- [x] Include the light as a visible object (emitted radiance)
+- [x] Improve performance by making the Vector3D member functions inline
+- [x] Implement indirect lighting for the `StochasticRayTracer`
+- [x] Switch all the regular pointers to smart pointers (shared_ptr)
+- [x] Fix mutuallyVisible method on the Scene class
+- [x] Optimize the code by using stack objects instead of heap objects where appropriate
+- [x] Profile the code using Valgrind https://web.stanford.edu/class/archive/cs/cs107/cs107.1194/resources/callgrind
+- [ ] Implement the TriangleMesh primitive, including intersection with rays [scratchapixel](https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-polygon-mesh)
 - [ ] Improve performance using a space partitioning technique like Bounding Volume Hierarchies
+- [ ] Use [Assimp](http://assimp.org/) for reading 3D model file formats
+- [ ] Test using more complex models
+- [ ] Implement Jensen's Photon Mapping
+- [ ] Read the scene data from PBRT format using https:/github.com/ingowald/pbrt-parser
 - [ ] Read the scene data from glTF format using https://github.com/syoyo/tinygltf 
-- [ ] Read the scene data from PBRT format using https://github.com/ingowald/pbrt-parser
 - [ ] Implement Blinn BRDF
-- [ ] Implement indirect lighting for the `StochasticRayTracer`
 
+## Smart Pointers vs Stack Objects
+
+Using mostly stack objects we observe this behaviour:
+
+- For output images up to 300x300, the generation is quite fast (< 1 sec)
+- For output images from 400x400, there is a big slowdown (> 5 sec) and, when profiling, we find there are lots of calls to tiny_free_detach_region and tiny_free_reattach_region. It seems we are hitting some stack limit and then there is lot of memory movement that slowdowns everything.
