@@ -2,10 +2,13 @@
 #define _TRIANGLE_MESH_H
 
 #include "primitive.h"
+#include "triangle.h"
+
 #include "../util/point3D.h"
 #include "../util/ray.h"
 #include "../util/util.h"
 
+#include <limits>
 #include <memory>
 #include <vector>
 
@@ -21,19 +24,21 @@
 
 class TriangleMesh : public Primitive
 {
-	std::vector<Point3D> vertices;       // All the vertices in the mesh
+	std::vector<std::shared_ptr<Point3D>> vertices;       // All the vertices in the mesh
     std::vector<int> vertexIndexes;      
-	std::shared_ptr<Vector3D> normal;      // Plane containing
-	//real distance;                         // the triangle
+    int numberTriangles;
   
   public:
 	TriangleMesh();
-	TriangleMesh(std::vector<Point3D> vertices, 
+	TriangleMesh(std::vector<std::shared_ptr<Point3D>> vertices, 
                  std::vector<int> vertexIndexes, 
                  std::shared_ptr<Material> mat);
 	real intersect(std::shared_ptr<Ray> r, Vector3D &normal);
     int getNumberTriangles();
     int getNumberVertices();
+  
+  private:
+    void generatePolySphere(float radius, int divisions);
 };
 
 
