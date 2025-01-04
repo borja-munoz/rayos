@@ -10,10 +10,10 @@ void initGenMT(unsigned long seed)
 
 //--------------------------------------------------------------------
 
-void initGenSSE(unsigned int seed)
-{
-	srand_sse(seed);
-}
+// void initGenSSE(unsigned int seed)
+// {
+// 	srand_sse(seed);
+// }
 
 
 //--------------------------------------------------------------------
@@ -42,14 +42,14 @@ unsigned long getRandomIntMT(int x, int y)
 
 //--------------------------------------------------------------------
 
-real getRandomNumberSSE(real x, real y)
-{
-	real result;
+// real getRandomNumberSSE(real x, real y)
+// {
+// 	real result;
 
-    result = rand_sse() * INV_MAX_INT; 
+//     result = rand_sse() * INV_MAX_INT; 
 
-	return(x + ((y - x) * result));
-}
+// 	return(x + ((y - x) * result));
+// }
 
 
 //--------------------------------------------------------------------
