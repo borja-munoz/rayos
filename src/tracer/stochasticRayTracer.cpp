@@ -240,7 +240,7 @@ Color StochasticRayTracer::directLighting(std::shared_ptr<Scene> s,
   Color radiance, rad;
   int lightIndex;
   std::shared_ptr<Point3D> lightPoint;
-  real distancePuntoLight, geometryTerm;
+  real distancePointLight, geometryTerm;
   bool lightVisible;
   std::shared_ptr<Vector3D> L, lightNormal;
   std::shared_ptr<Primitive> object;
@@ -260,13 +260,16 @@ Color StochasticRayTracer::directLighting(std::shared_ptr<Scene> s,
 
     // Ray from hitpoint to light point
     L = lightPoint->substract(h->hitPoint);
-    distancePuntoLight = L->length();
+    distancePointLight = L->length();
     L->normalize();
 
     // Check if we can see the light point from the hitpoint
     Chrono *c = new Chrono();
     c->start();
-    lightVisible = s->mutuallyVisible(h->hitPoint, lightPoint);
+    // lightVisible = s->mutuallyVisible(h->hitPoint, lightPoint);
+    // Avoid shadow acne by displacing the hitpoint a bit in the direction of the normal
+    lightVisible = s->mutuallyVisible(h->hitPoint->sum(h->normal->product(1e-4)), lightPoint);
+    // lightVisible = true;
     c->stop();
     this->timeStats.timeMutuallyVisible += c->value() * 1000;
     // cout << "mutuallyVisible elapsed time = " << c->value() * 1000 << " milliseconds\n";
@@ -286,7 +289,7 @@ Color StochasticRayTracer::directLighting(std::shared_ptr<Scene> s,
       rad = this->BRDF(mat, *(h->normal), L, dir);
 
       geometryTerm = (h->normal->dotProduct(L) * lightNormal->dotProduct(L)) /
-                     (distancePuntoLight * distancePuntoLight);
+                     (distancePointLight * distancePointLight);
 
       // for (unsigned int x = 0; x < 3; x++)
       // radiance[x] += (rad[x] * geometryTerm) / probLight[lightIndex];
