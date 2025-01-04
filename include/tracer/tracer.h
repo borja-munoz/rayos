@@ -24,7 +24,7 @@ typedef struct
 } HitPoint;
 
 // Struct to store render stats
-typedef struct {
+typedef struct RS {
   unsigned int numberObjects = 0;
   unsigned int numberTriangles = 0;
   unsigned int numSampleRays = 0;
@@ -34,7 +34,7 @@ typedef struct {
 } RenderStats;
 
 // Struct to store execution time measurements
-typedef struct {
+typedef struct TS {
   double timeGetHitPoint = 0;
   double timeDirectLighting = 0;
   double timeIndirectLighting = 0;
