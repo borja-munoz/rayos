@@ -33,8 +33,10 @@
 
 *.3DS
 *.txt
+!CMakeLists.txt
 
 bin/
+build/
 callgrind/
 output/
 pbrt/
