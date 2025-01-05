@@ -7,6 +7,8 @@
 #include <iostream>
 #include <vector>
 
+#include "omp.h"
+
 using namespace std;
 
 class StochasticRayTracer : public Tracer
