@@ -9,7 +9,7 @@ Camera::Camera()
 	this->hFov = 60;
 	this->vFov = 60;
 	this->distance = 1;
-	this->xRes = this->yRes = 600;
+	this->xRes = this->yRes = 640;
 
 	this->initialize();
 }
