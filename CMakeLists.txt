@@ -3,6 +3,12 @@ project(rayos VERSION 0.1.0 LANGUAGES CXX)
 
 add_subdirectory(external/pbrt-parser EXCLUDE_FROM_ALL) 
 
+# For MacOS, OpenMP should be installed with homebrew
+# and the OpenMP_ROOT must be set to the location where
+# it has been installed
+find_package(OpenMP COMPONENTS CXX REQUIRED)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+
 set(SOURCES 
     src/bitmap.cpp
     src/rayos.cpp
@@ -86,4 +92,8 @@ target_include_directories(rayos PRIVATE
 )
 target_include_directories(rayos PRIVATE ${CMAKE_PROJECT_SOURCE_DIR}/external/pbrt-parser)
 
+target_include_directories(rayos PRIVATE /opt/homebrew/opt/libomp/include)
+
 target_link_libraries(rayos PRIVATE pbrtParser)
+
+target_link_libraries(rayos PRIVATE OpenMP::OpenMP_CXX)

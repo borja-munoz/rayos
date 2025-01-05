@@ -1,6 +1,8 @@
 #include "stochasticRayTracer.h"
 #include "util/chrono.h"
 
+#include <sstream>
+
 StochasticRayTracer::StochasticRayTracer()
 {
   sampleRays = 4;
@@ -49,23 +51,40 @@ std::shared_ptr<Bitmap> StochasticRayTracer::trace(std::shared_ptr<Scene> s)
   probLight[0] = 1.0;
 
   // We loop through the entire viewplane
-  for (unsigned int i = 0; i < ry; i++)
-  {
-    for (unsigned int j = 0; j < rx; j++)
-    {
-      Chrono *c = new Chrono();
-      c->start();
+  // Parallel for used for an image of 640x640 pixels
+  // with each iteration working on a 16x16 tile
+  int totalPixels = rx * ry;
+  int tileSize = 16; 
+#pragma omp parallel for
+  for (int initialTilePixel = 0; 
+           initialTilePixel < totalPixels; 
+           initialTilePixel += tileSize * tileSize) {
+
+    int row = initialTilePixel / ry;
+    int initialColumn = initialTilePixel % tileSize;
+
+    std::stringstream stream; // #include <sstream> for this
+    stream << "Initial tile pixel " << initialTilePixel << ", Row " << row << ", Column " << initialColumn << ", Thread " << omp_get_thread_num() << endl;
+    cout << stream.str();
+
+    // Only the outer loop is parallelized, this inner
+    // loop is executed completely in the same thread
+    for (int j = initialColumn; 
+             j < initialColumn + tileSize;
+             j += 1) {
+      // Chrono *c = new Chrono();
+      // c->start();
 
       if (this->sampleRays == 1)
       {
-        eyeRay = cam->getEyeRay(j, i);
+        eyeRay = cam->getEyeRay(j, row);
         radiance = traceRay(eyeRay, s, probLight, viewer);
       }
       else
       {
         // We send several rays for each pixel to reduce
         // aliasing and improve image quality
-        eyeRays = cam->getSampleEyeRays(j, i, this->sampleRays);
+        eyeRays = cam->getSampleEyeRays(j, row, this->sampleRays);
         radiance = Color(0, 0, 0);
         for (unsigned int k = 0; k < this->sampleRays; k++)
         {
@@ -86,15 +105,16 @@ std::shared_ptr<Bitmap> StochasticRayTracer::trace(std::shared_ptr<Scene> s)
         radiance /= this->sampleRays;
       }
 
-      im->setHDRPixel(i, j, radiance);
+      im->setHDRPixel(row, j, radiance);
 
-      c->stop();
-      this->timeStats.timePixel += c->value() * 1000;
+      // c->stop();
+      // this->timeStats.timePixel += c->value() * 1000;
       // cout << "Pixel elapsed time = " << c->value() * 1000 << " milliseconds\n";
     }
-    if (i % 10 == 0)
-      cout << "Completed = " << i * 100 / ry << "%" << endl;
+    // if (i % 10 == 0)
+    //   cout << "Completed = " << i * 100 / ry << "%" << endl;
   }
+
 
   cout << "Time Get Hit Point: " << this->timeStats.timeGetHitPoint << " ms\n";
   
@@ -120,25 +140,25 @@ Color StochasticRayTracer::traceRay(std::shared_ptr<Ray> r,
   // in the scene and calculate the nearest to the viewer.
   // Finally, we will evaluate a local BRDF in the hitpoint.
 
-  Chrono *c1 = new Chrono();
-  c1->start();
+  // Chrono *c1 = new Chrono();
+  // c1->start();
   h = this->getHitPoint(r, s);
-  c1->stop();
-  this->timeStats.timeGetHitPoint += c1->value() * 1000;
+  // c1->stop();
+  // this->timeStats.timeGetHitPoint += c1->value() * 1000;
   // cout << "\ngetHitPoint elapsed time = " << c1->value() * 1000 << " milliseconds\n";
 
   // If we have a hitpoint, we must calculate radiance emitted in the viewer direction
   if (h != 0)
   {
     // Direction where we need to find the radiance
-    Chrono *c2 = new Chrono();
-    c2->start();
+    // Chrono *c2 = new Chrono();
+    // c2->start();
     radianceDirection = viewer->substract(h->hitPoint);
     radianceDirection->normalize();
 
     radiance = this->calculateRadiance(h, radianceDirection, s, probLight);
-    c2->stop();
-    this->timeStats.timeCalculateRadiance += c2->value() * 1000;
+    // c2->stop();
+    // this->timeStats.timeCalculateRadiance += c2->value() * 1000;
     // cout << "calculateRadiance elapsed time = " << c2->value() * 1000 << " milliseconds\n";
   }
   else
@@ -173,18 +193,18 @@ Color StochasticRayTracer::calculateRadiance(std::shared_ptr<HitPoint> h,
 
   emittedRadiance = this->emittedRadiance(s, h);
 
-  Chrono *c1 = new Chrono();
-  c1->start();
+  // Chrono *c1 = new Chrono();
+  // c1->start();
   directLighting = this->directLighting(s, h, probLight, dir);
-  c1->stop();
-  this->timeStats.timeDirectLighting += c1->value() * 1000;
+  // c1->stop();
+  // this->timeStats.timeDirectLighting += c1->value() * 1000;
   //cout << "directLighting = " << c1->value() * 1000 << " milliseconds\n";
 
-  Chrono *c2 = new Chrono();
-  c2->start();
+  // Chrono *c2 = new Chrono();
+  // c2->start();
   //indirectLighting = this->indirectLighting(s, h, probLight);
-  c2->stop();
-  this->timeStats.timeIndirectLighting += c2->value() * 1000;
+  // c2->stop();
+  // this->timeStats.timeIndirectLighting += c2->value() * 1000;
   // cout << "indirectLighting elapsed time = " << c2->value() * 1000 << " milliseconds\n";
 
   //reflectedRadiance = directLighting + indirectLighting;
@@ -264,14 +284,14 @@ Color StochasticRayTracer::directLighting(std::shared_ptr<Scene> s,
     L->normalize();
 
     // Check if we can see the light point from the hitpoint
-    Chrono *c = new Chrono();
-    c->start();
+    // Chrono *c = new Chrono();
+    // c->start();
     // lightVisible = s->mutuallyVisible(h->hitPoint, lightPoint);
     // Avoid shadow acne by displacing the hitpoint a bit in the direction of the normal
     lightVisible = s->mutuallyVisible(h->hitPoint->sum(h->normal->product(1e-4)), lightPoint);
     // lightVisible = true;
-    c->stop();
-    this->timeStats.timeMutuallyVisible += c->value() * 1000;
+    // c->stop();
+    // this->timeStats.timeMutuallyVisible += c->value() * 1000;
     // cout << "mutuallyVisible elapsed time = " << c->value() * 1000 << " milliseconds\n";
 
     // If it is visible, we calculate reflected radiance from the light source
