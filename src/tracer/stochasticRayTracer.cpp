@@ -55,61 +55,71 @@ std::shared_ptr<Bitmap> StochasticRayTracer::trace(std::shared_ptr<Scene> s)
   // with each iteration working on a 16x16 tile
   int totalPixels = rx * ry;
   int tileSize = 16; 
+  int tileRows = ry / tileSize;
+  int tileColumns = rx / tileSize;
 #pragma omp parallel for
-  for (int initialTilePixel = 0; 
-           initialTilePixel < totalPixels; 
-           initialTilePixel += tileSize * tileSize) {
+  for (int tileRow = 0; tileRow < tileRows; tileRow++) {
 
-    int row = initialTilePixel / ry;
-    int initialColumn = initialTilePixel % tileSize;
-
-    std::stringstream stream; // #include <sstream> for this
-    stream << "Initial tile pixel " << initialTilePixel << ", Row " << row << ", Column " << initialColumn << ", Thread " << omp_get_thread_num() << endl;
-    cout << stream.str();
+    std::stringstream stream; 
+    stream << "Tile Row " << tileRow << ", Thread " << omp_get_thread_num() << endl;
+    cout << stream.str() << endl;
 
     // Only the outer loop is parallelized, this inner
     // loop is executed completely in the same thread
-    for (int j = initialColumn; 
-             j < initialColumn + tileSize;
-             j += 1) {
-      // Chrono *c = new Chrono();
-      // c->start();
+    for (int xTile = 0; xTile < tileSize; xTile++) {
+      for (int yTile = 0; yTile < tileSize; yTile++) {
 
-      if (this->sampleRays == 1)
-      {
-        eyeRay = cam->getEyeRay(j, row);
-        radiance = traceRay(eyeRay, s, probLight, viewer);
-      }
-      else
-      {
-        // We send several rays for each pixel to reduce
-        // aliasing and improve image quality
-        eyeRays = cam->getSampleEyeRays(j, row, this->sampleRays);
-        radiance = Color(0, 0, 0);
-        for (unsigned int k = 0; k < this->sampleRays; k++)
-        {
+        int pixelX = xTile + tileRow * tileSize;
+        int pixelY = yTile + tileRow * tileSize;
 
-          // _CrtMemState s1, s2, s3;
-          // _CrtMemCheckpoint(&s1);
-
-          rad = traceRay(eyeRays[k], s, probLight, viewer);
-
-          for (unsigned int x = 0; x < 3; x++)
-            radiance += rad;
-
-          //_CrtMemCheckpoint(&s2);
-          // if (_CrtMemDifference(&s3, &s1, &s2))
-          //	_CrtMemDumpStatistics(&s3);
+        if (omp_get_thread_num() == 1) {
+          std::stringstream stream; 
+          stream << "Tile Row " << tileRow;
+          stream << ", xTile " << xTile << ", yTile " << yTile;
+          stream << ", xPixel " << pixelX << ", yPixel " << pixelY;
+          stream << ", Thread " << omp_get_thread_num();
+          cout << stream.str() << endl;
         }
 
-        radiance /= this->sampleRays;
+        // Chrono *c = new Chrono();
+        // c->start();
+
+        if (this->sampleRays == 1)
+        {
+          eyeRay = cam->getEyeRay(pixelX, pixelY);
+          radiance = traceRay(eyeRay, s, probLight, viewer);
+        }
+        else
+        {
+          // We send several rays for each pixel to reduce
+          // aliasing and improve image quality
+          eyeRays = cam->getSampleEyeRays(pixelX, pixelY, this->sampleRays);
+          radiance = Color(0, 0, 0);
+          for (unsigned int k = 0; k < this->sampleRays; k++)
+          {
+
+            // _CrtMemState s1, s2, s3;
+            // _CrtMemCheckpoint(&s1);
+
+            rad = traceRay(eyeRays[k], s, probLight, viewer);
+
+            for (unsigned int x = 0; x < 3; x++)
+              radiance += rad;
+
+            //_CrtMemCheckpoint(&s2);
+            // if (_CrtMemDifference(&s3, &s1, &s2))
+            //	_CrtMemDumpStatistics(&s3);
+          }
+
+          radiance /= this->sampleRays;
+        }
+
+        im->setHDRPixel(pixelX, pixelY, radiance);
+
+        // c->stop();
+        // this->timeStats.timePixel += c->value() * 1000;
+        // cout << "Pixel elapsed time = " << c->value() * 1000 << " milliseconds\n";
       }
-
-      im->setHDRPixel(row, j, radiance);
-
-      // c->stop();
-      // this->timeStats.timePixel += c->value() * 1000;
-      // cout << "Pixel elapsed time = " << c->value() * 1000 << " milliseconds\n";
     }
     // if (i % 10 == 0)
     //   cout << "Completed = " << i * 100 / ry << "%" << endl;
