@@ -21,10 +21,10 @@ TriangleMesh::TriangleMesh()
 
     this->numberTriangles = this->vertexIndexes.size() / 3;
 
-    for (int i = 0; i < this->vertices.size(); i++) 
-    {
-      std::cout << this->vertices[i]->x << "," << this->vertices[i]->y << "," << this->vertices[i]->z << "\n";
-    }
+    // for (int i = 0; i < this->vertices.size(); i++) 
+    // {
+    //   std::cout << this->vertices[i]->x << "," << this->vertices[i]->y << "," << this->vertices[i]->z << "\n";
+    // }
 
     this->material = std::make_shared<Material>();
     this->material->set(
