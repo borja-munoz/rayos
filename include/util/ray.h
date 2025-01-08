@@ -17,7 +17,7 @@ class Ray
   public:
  
 	Ray();
-	Ray(std::shared_ptr<Point3D> p, std::shared_ptr<Vector3D> dir);
+	Ray(const std::shared_ptr<Point3D> p, std::shared_ptr<Vector3D> dir);
 	~Ray();
 	std::shared_ptr<Point3D> getOrigin(void);
 	std::shared_ptr<Vector3D> getDirection(void);

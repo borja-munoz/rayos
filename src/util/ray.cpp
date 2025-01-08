@@ -6,9 +6,9 @@ Ray::Ray()
 	this->direction = std::make_shared<Vector3D>();
 }
 
-Ray::Ray(std::shared_ptr<Point3D> p, std::shared_ptr<Vector3D> direction)
+Ray::Ray(const std::shared_ptr<Point3D> p, std::shared_ptr<Vector3D> direction)
 {
-	this->origin = p;
+	this->origin = std::make_shared<Point3D>(*p);
 	this->direction = direction;
 }
 
@@ -23,7 +23,7 @@ std::shared_ptr<Point3D> Ray::getOrigin(void)
 
 std::shared_ptr<Vector3D> Ray::getDirection(void)
 {
-	return(this->direction);
+	return(std::make_shared<Vector3D>(*(this->direction)));
 }
 
 void Ray::setOrigin(std::shared_ptr<Point3D> p)
