@@ -53,23 +53,20 @@ std::shared_ptr<Bitmap> StochasticRayTracer::trace(std::shared_ptr<Scene> s)
   // We loop through the entire viewplane
   // Parallel for used for an image of 640x640 pixels
   // with each iteration working on a 16x16 tile
-  int totalPixels = rx * ry;
   int tileSize = 16; 
   int tileRows = ry / tileSize;
   int tileColumns = rx / tileSize;
-  // int totalPixelsCount = 0;
-#pragma omp parallel for shared(cam, s)
-  for (int tileRow = 0; tileRow < tileRows; tileRow++) {
 
-    // Only the outer loop is parallelized, this inner
-    // loop is executed completely in the same thread
+#pragma omp parallel for \
+  shared(cam, s, viewer, probLight), \
+  private(eyeRay, eyeRays, rad, radiance) \
+  collapse(2)
+
+  for (int tileRow = 0; tileRow < tileRows; tileRow++) {
     for (int tileColumn = 0; tileColumn < tileColumns; tileColumn++) {
 
-      // std::stringstream stream; 
-      // stream << "Tile Row " << tileRow;
-      // stream << ", Tile Column " << tileColumn;
-      // stream << ", Thread " << omp_get_thread_num() << endl;
-      // cout << stream.str() << endl;
+      // Only the two outer loops are parallelized, these inner
+      // loops are executed completely in the same thread
 
       for (int xTile = 0; xTile < tileSize; xTile++) {
         for (int yTile = 0; yTile < tileSize; yTile++) {
@@ -77,46 +74,14 @@ std::shared_ptr<Bitmap> StochasticRayTracer::trace(std::shared_ptr<Scene> s)
           int pixelX = xTile + tileRow * tileSize;
           int pixelY = yTile + tileColumn * tileSize;
 
-          // if (omp_get_thread_num() == 3) {
-          //   std::stringstream stream; 
-          //   // stream << ", xTile " << xTile << ", yTile " << yTile;
-          //   stream << "xPixel " << pixelX << ", yPixel " << pixelY;
-          //   stream << ", Thread " << omp_get_thread_num();
-          //   cout << stream.str() << endl;
-          // }
-
-// #pragma omp atomic
-//           totalPixelsCount += 1;
-
           // Chrono *c = new Chrono();
           // c->start();
 
           if (this->sampleRays == 1)
           {
-            // #pragma omp critical
             eyeRay = cam->getEyeRay(pixelX, pixelY);
 
-            // When using parallel code, there are segmentation faults
-            // probably caused by shared_ptr that might not be freed 
-            // correctly due to data races.
-
-            // In calls to the traceRay function, there are 3 shared_ptr:
-            // - eyeRay created by every thread, so it should be local and not 
-            //   a problem
-            // - s -> scene, created outside the parallel for, so shared between
-            //   all threads and, potentially, problematic
-            // - viewer -> camera location, created outside the parallel for, so
-            //   also shared, but we can create one for each ray, or at least
-            //   every tile
-
-            // #pragma omp critical
-            //radiance = traceRay(eyeRay, s, probLight, viewer);
-            //radiance = traceRay(eyeRay, s, probLight, cam->getLocation());
-            #pragma omp critical
-            radiance = traceRay(eyeRay, 
-                                std::make_shared<Scene>(), 
-                                probLight, 
-                                cam->getLocation());
+            radiance = traceRay(eyeRay, s, probLight, viewer);
           }
           else
           {
@@ -127,24 +92,23 @@ std::shared_ptr<Bitmap> StochasticRayTracer::trace(std::shared_ptr<Scene> s)
             for (unsigned int k = 0; k < this->sampleRays; k++)
             {
 
-          //     // _CrtMemState s1, s2, s3;
-          //     // _CrtMemCheckpoint(&s1);
+              // _CrtMemState s1, s2, s3;
+              // _CrtMemCheckpoint(&s1);
 
-              // rad = traceRay(eyeRays[k], s, probLight, viewer);
+              rad = traceRay(eyeRays[k], s, probLight, viewer);
 
               for (unsigned int x = 0; x < 3; x++)
                 radiance += rad;
 
-          //     //_CrtMemCheckpoint(&s2);
-          //     // if (_CrtMemDifference(&s3, &s1, &s2))
-          //     //	_CrtMemDumpStatistics(&s3);
+              //_CrtMemCheckpoint(&s2);
+              // if (_CrtMemDifference(&s3, &s1, &s2))
+              //	_CrtMemDumpStatistics(&s3);
             }
 
             radiance /= this->sampleRays;
           }
 
-          //#pragma omp critical
-          im->setHDRPixel(pixelX, pixelY, radiance);
+          im->setHDRPixel(pixelY, pixelX, radiance);
 
           // c->stop();
           // this->timeStats.timePixel += c->value() * 1000;
@@ -155,8 +119,6 @@ std::shared_ptr<Bitmap> StochasticRayTracer::trace(std::shared_ptr<Scene> s)
     // if (i % 10 == 0)
     //   cout << "Completed = " << i * 100 / ry << "%" << endl;
   }
-
-  // cout << "Total Pixels: " << totalPixels << ", Total Pixels Count: " << totalPixelsCount << endl;
 
   cout << "Time Get Hit Point: " << this->timeStats.timeGetHitPoint << " ms\n";
   
