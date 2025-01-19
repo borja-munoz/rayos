@@ -57,10 +57,22 @@ std::shared_ptr<Bitmap> StochasticRayTracer::trace(std::shared_ptr<Scene> s)
   int tileRows = ry / tileSize;
   int tileColumns = rx / tileSize;
 
+// Important to define thread shared and private variables
+// to avoid data races.
+// With collapse we are parallelizing the two outer loops.
+// I've tried dynamic scheduling, that let threads pick up 
+// new tiles dynamically as they finish their work, 
+// but the execution time has increased. Static scheduling
+// works better because in a simple scene, there is no 
+// significant computing time differences among tiles.
+// Increasing the tile size from 16x16 to 32x32 to reduce
+// thread synchronization overhead has not improved the
+// execution time either.
 #pragma omp parallel for \
   shared(cam, s, viewer, probLight), \
   private(eyeRay, eyeRays, rad, radiance) \
   collapse(2)
+  // schedule(dynamic, 1)   
 
   for (int tileRow = 0; tileRow < tileRows; tileRow++) {
     for (int tileColumn = 0; tileColumn < tileColumns; tileColumn++) {
