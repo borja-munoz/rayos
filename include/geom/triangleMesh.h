@@ -22,20 +22,30 @@
 // t1 = v1, v2, v3
 // vertexIndex = [0, 1, 2, 1, 2, 3]
 
+// Instead of creating each triangle from the vertices and indexes, we
+// will create the triangles and their normals in the constructor
+struct TriangleData {
+    float v0[3]; // Vertex 0
+    float v1[3]; // Vertex 1
+    float v2[3]; // Vertex 2
+    float normal[3]; // Precomputed normal
+};
+
 class TriangleMesh : public Primitive
 {
-	std::vector<std::shared_ptr<Point3D>> vertices;       // All the vertices in the mesh
-    std::vector<int> vertexIndexes;      
-    int numberTriangles;
+	std::vector<Point3D> vertices;       // All the vertices in the mesh
+  std::vector<int> vertexIndexes;      
+  int numberTriangles;
+  std::vector<TriangleData> triangleData;
   
   public:
 	TriangleMesh();
-	TriangleMesh(std::vector<std::shared_ptr<Point3D>> vertices, 
-                 std::vector<int> vertexIndexes, 
-                 std::shared_ptr<Material> mat);
-	real intersect(std::shared_ptr<Ray> r, Vector3D &normal);
-    int getNumberTriangles();
-    int getNumberVertices();
+	TriangleMesh(std::vector<Point3D> vertices, 
+               std::vector<int> vertexIndexes, 
+               Material mat);
+	real intersect(const Ray& r, Vector3D &normal) const;
+  int getNumberTriangles();
+  int getNumberVertices();
   
   private:
     void generatePolySphere(float radius, int divisions);
