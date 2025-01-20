@@ -22,21 +22,12 @@
 // t1 = v1, v2, v3
 // vertexIndex = [0, 1, 2, 1, 2, 3]
 
-// Instead of creating each triangle from the vertices and indexes, we
-// will create the triangles and their normals in the constructor
-struct TriangleData {
-    float v0[3]; // Vertex 0
-    float v1[3]; // Vertex 1
-    float v2[3]; // Vertex 2
-    float normal[3]; // Precomputed normal
-};
-
 class TriangleMesh : public Primitive
 {
 	std::vector<Point3D> vertices;       // All the vertices in the mesh
   std::vector<int> vertexIndexes;      
   int numberTriangles;
-  std::vector<TriangleData> triangleData;
+  std::vector<Triangle> triangles;
   
   public:
 	TriangleMesh();
