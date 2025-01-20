@@ -5,7 +5,7 @@
 
 class WhittedRayTracer : public Tracer
 {
-	Color traceRay(std::shared_ptr<Ray> r, std::shared_ptr<Scene> s);
+	Color traceRay(const Ray& r, std::shared_ptr<Scene> s);
 
   public:
 	WhittedRayTracer();

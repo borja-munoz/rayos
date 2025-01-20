@@ -3,9 +3,9 @@
 
 Camera::Camera()
 {
-	this->location = std::make_shared<Point3D>(0, 0, -0.75);
-	this->view = std::make_shared<Point3D>(0, 0, -2);
-	this->up = std::make_shared<Vector3D>(0, 1, 0);
+	this->location = Point3D(0, 0, -0.75);
+	this->view = Point3D(0, 0, -2);
+	this->up = Vector3D(0, 1, 0);
 	this->hFov = 60;
 	this->vFov = 60;
 	this->distance = 1;
@@ -15,9 +15,9 @@ Camera::Camera()
 }
 
 
-Camera::Camera(std::shared_ptr<Point3D> location, 
-               std::shared_ptr<Point3D> view, 
-               std::shared_ptr<Vector3D> up, 
+Camera::Camera(Point3D location, 
+               Point3D view, 
+               Vector3D up, 
                real distance, 
 	           real hFov, 
                real vFov, 
@@ -39,25 +39,25 @@ Camera::Camera(std::shared_ptr<Point3D> location,
 void Camera::initialize(void)
 {
 	// Camera coordinate system
-	this->zCam = this->view->substract(this->location);          // Z axis is the direction from the camera to the point where the
+	this->zCam = this->view.substract(this->location);          // Z axis is the direction from the camera to the point where the
                                                                  // camera is pointing
-	this->xCam = this->zCam->crossProduct(this->up);             // X axis is perpendicular to Z axis and UP vector
-	this->xCam->normalize();
-	this->yCam = this->zCam->crossProduct(this->xCam);           // Y axis is perpendicular to X and Z axis
-	this->yCam->normalize();
+	this->xCam = this->zCam.crossProduct(this->up);             // X axis is perpendicular to Z axis and UP vector
+	this->xCam.normalize();
+	this->yCam = this->zCam.crossProduct(this->xCam);           // Y axis is perpendicular to X and Z axis
+	this->yCam.normalize();
 
 	// Viewport origin (Camera location shifted in a distance equal to the viewplane in 
     // the direction the camera is pointing (Z axis)
-	this->oViewport = this->location->sum(this->zCam->product(this->distance));	
+	this->oViewport = this->location.sum(this->zCam.product(this->distance));	
 
 	// Viewport axis in the viewplane
-	this->uViewport = this->xCam->product(this->distance * tan(RADIANS(this->hFov)));
-	this->vViewport = this->yCam->product(this->distance * tan(RADIANS(this->vFov)));
+	this->uViewport = this->xCam.product(this->distance * tan(RADIANS(this->hFov)));
+	this->vViewport = this->yCam.product(this->distance * tan(RADIANS(this->vFov)));
 }
 
-std::shared_ptr<Point3D> Camera::getLocation(void)
+Point3D Camera::getLocation(void)
 {
-	return(std::make_shared<Point3D>(*(this->location)));
+	return(this->location);
 }
 
 void Camera::getResolution(unsigned int &xRes, unsigned int &yRes)
@@ -66,38 +66,34 @@ void Camera::getResolution(unsigned int &xRes, unsigned int &yRes)
 	yRes = this->yRes;
 }
 
-std::shared_ptr<Ray> Camera::getEyeRay(real x, real y)
+Ray Camera::getEyeRay(real x, real y)
 {
-	std::shared_ptr<Vector3D> direction;
-	std::shared_ptr<Ray> eyeRay;
+	Vector3D direction;
 	real alfa, beta;
-	std::shared_ptr<Point3D> pViewport;
+	Point3D pViewport;
 
     // First we need to calculate the point in the viewport where the ray goes through
 	// P = oViewport + (alfa * uViewport) + (beta * vViewport)
 	// alfa y beta represents the pixel center
 	alfa = ((2 * (x + 0.5)) / this->xRes) - 1;
 	beta = 1 - ((2 * (y + 0.5)) / this->yRes); // Inverted because Y axis in the viewport is different than the one in the image
-	pViewport = oViewport->sum(uViewport->product(alfa)->sum(vViewport->product(beta)));
+	pViewport = oViewport.sum(uViewport.product(alfa).sum(vViewport.product(beta)));
 
     // Ray direction will be the vector from the point in the viewport to the camera location
-	direction = pViewport->substract(this->location);
-	direction->normalize();
+	direction = pViewport.substract(this->location);
+	direction.normalize();
 
 	// We use the camera location as ray origin
-	eyeRay = std::make_shared<Ray>(this->location, direction);
-
-	return(eyeRay);
+	return Ray(this->location, direction);
 }
 
 
-vector<std::shared_ptr<Ray>> Camera::getSampleEyeRays(real x, real y, unsigned int sampleRays)
+vector<Ray> Camera::getSampleEyeRays(real x, real y, unsigned int sampleRays)
 {
-	std::shared_ptr<Vector3D> direction;
-	std::shared_ptr<Ray> eyeRay;
+	Vector3D direction;
 	real alfa, beta;
-	std::shared_ptr<Point3D> pViewport;
-	vector<std::shared_ptr<Ray>> eyeRays;
+	Point3D pViewport;
+	vector<Ray> eyeRays;
 	real jitterX, jitterY;
 	real sampleRaysDiv2;
 
@@ -120,21 +116,17 @@ vector<std::shared_ptr<Ray>> Camera::getSampleEyeRays(real x, real y, unsigned i
 			beta = 1 - ((2 * (y + jitterY)) / this->yRes); 
 
 			// Finally we can get the point in the viewport
-			std::shared_ptr<Vector3D> uAlfa = uViewport->product(alfa);
-			std::shared_ptr<Vector3D> vBeta = vViewport->product(beta);
-			std::shared_ptr<Vector3D> desp = uAlfa->sum(vBeta);
-			pViewport = oViewport->sum(desp);
+			Vector3D uAlfa = uViewport.product(alfa);
+			Vector3D vBeta = vViewport.product(beta);
+			Vector3D desp = uAlfa.sum(vBeta);
+			pViewport = oViewport.sum(desp);
 
             // Ray direction will be the vector from the viewport point to the camera location
-			direction = pViewport->substract(this->location);
-			direction->normalize();
+			direction = pViewport.substract(this->location);
+			direction.normalize();
 
 			// We crete the ray with the camera location as origin
-			eyeRay = std::make_shared<Ray>();
-			eyeRay->setOrigin(this->location);
-			eyeRay->setDirection(direction);
-			
-			eyeRays.push_back(eyeRay);
+			eyeRays.push_back(Ray(this->location, direction));
 		}
 
 	return(eyeRays);

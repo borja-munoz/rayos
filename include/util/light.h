@@ -10,19 +10,19 @@ class Light
 {
   protected:
 
-	std::shared_ptr<Color> color;
+	Color color;
 	real intensity;
 
   public: 
 	Light();
-	Light(std::shared_ptr<Color> color, real intensity);
-	std::shared_ptr<Color> getColor(void);
-	real getIntensity(void);
-	void setColor(std::shared_ptr<Color> color);
+	Light(Color color, real intensity);
+	Color getColor(void) const;
+	real getIntensity(void) const;
+	void setColor(Color color);
 	void setIntensity(real intensity);
-	virtual std::shared_ptr<Point3D> getSamplePoint(void) = 0;
-	virtual real getArea(void) = 0;
-	virtual std::shared_ptr<Vector3D> getNormal(void) = 0;
+	virtual Point3D getSamplePoint(void) const = 0;
+	virtual real getArea(void) const = 0;
+	virtual Vector3D getNormal(void) const = 0;
 };
 
 

@@ -29,25 +29,25 @@ Tracer::Tracer(BRDFtype t)
 
 // Trace a ray in the scene and returns information about the hitpoint:
 // Point, object and normal
-std::shared_ptr<HitPoint> Tracer::getHitPoint(std::shared_ptr<Ray> r, 
-                                              std::shared_ptr<Scene> s)
+std::optional<HitPoint> Tracer::getHitPoint(const Ray& r, 
+                                            std::shared_ptr<Scene> s)
 {
-	std::shared_ptr<HitPoint> h = std::make_shared<HitPoint>();
+	HitPoint h = HitPoint();
 	unsigned int numberObjects, i, j;
 	vector<real> intersection;
-	vector<std::shared_ptr<Vector3D>> normal;
+	vector<Vector3D> normal;
 	Vector3D N;
 	std::shared_ptr<Primitive> object;
 	  
 	// We intersect the ray with all the objects
-  // and select the one with the nearest intersection
+    // and select the one with the nearest intersection
 
 	numberObjects = s->getNumberObjects();
 	for (i = 0; i < numberObjects; i++)
 	{    
 		object = s->object[i];
 		intersection.push_back(object->intersect(r, N));
-		normal.push_back(std::make_shared<Vector3D>(N.x, N.y, N.z));
+		normal.push_back(Vector3D(N.x, N.y, N.z));
 	}
 
 	int nearest = -1;
@@ -64,15 +64,15 @@ std::shared_ptr<HitPoint> Tracer::getHitPoint(std::shared_ptr<Ray> r,
 	if (nearest != -1)
 	{
 		// Calculate hitpoint, object and normal
-		h->hitPoint = r->pointParametric(intersection[nearest]);
-		h->nearestObject = nearest;
-		h->normal = normal[nearest];
-		h->normal->normalize();
+		h.hitPoint = r.pointParametric(intersection[nearest]);
+		h.nearestObject = nearest;
+		h.normal = normal[nearest];
+		h.normal.normalize();
 	}
 	else
-		h = 0;
+		return std::nullopt;
 
-	return(h);
+	return h;
 }
 
 

@@ -19,18 +19,18 @@ Point3D::Point3D(const Point3D &p)
   this->z = p.z;
 }
 
-std::shared_ptr<Point3D> Point3D::sum(std::shared_ptr<Vector3D> v)
+Point3D Point3D::sum(const Vector3D& v) const
 {
-  return(std::make_shared<Point3D>(this->x + v->x,
-                                   this->y + v->y,
-                                   this->z + v->z));
+  return(Point3D(this->x + v.x,
+                 this->y + v.y,
+                 this->z + v.z));
 }
 
-std::shared_ptr<Vector3D> Point3D::substract(std::shared_ptr<Point3D> p)
+Vector3D Point3D::substract(const Point3D& p) const
 {
-  return(std::make_shared<Vector3D>(this->x - p->x,
-                                    this->y - p->y,
-                                    this->z - p->z));
+  return(Vector3D(this->x - p.x,
+                  this->y - p.y,
+                  this->z - p.z));
 }
 
 

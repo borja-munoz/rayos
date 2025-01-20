@@ -23,15 +23,15 @@ typedef enum
 class Primitive
 {
   protected:
-	std::shared_ptr<Material> material;
+	Material material;
 	ObjectType type;
   
   public:
  
 	Primitive();
-	std::shared_ptr<Material> getMaterial(void);
+	Material getMaterial(void);
 	ObjectType getType(void);
-	virtual real intersect(std::shared_ptr<Ray> r, Vector3D &normal) = 0;
+	virtual real intersect(const Ray& r, Vector3D &normal) const = 0;
 };
 
 

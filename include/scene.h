@@ -24,13 +24,13 @@ using namespace std;
 
 class Scene
 {
-	vector<std::shared_ptr<Light>> light;                
-	std::shared_ptr<Camera> camera;                    	
+	  vector<std::shared_ptr<Light>> light;                
+	  Camera camera;                    	
     
-    std::set<std::shared_ptr<pbrt::Object>> alreadyTraversed;
-    std::set<std::shared_ptr<pbrt::Material>> usedMaterials;
+    // std::set<std::shared_ptr<pbrt::Object>> alreadyTraversed;
+    // std::set<std::shared_ptr<pbrt::Material>> usedMaterials;
     
-    void traversePBRT(std::shared_ptr<pbrt::Object>); 
+    // void traversePBRT(std::shared_ptr<pbrt::Object>); 
 
     void createCornellBox();
     std::shared_ptr<Quad> cbLeftWall();
@@ -43,16 +43,16 @@ class Scene
 
   public:
 
-	vector<std::shared_ptr<Primitive>> object;       
+	  vector<std::shared_ptr<Primitive>> object;       
 
-	Scene();
+	  Scene();
     Scene(const std::string);
-	unsigned int getNumberObjects(void);
-	std::shared_ptr<Primitive> getObject(unsigned int objectIndex);
-	unsigned int getNumberLights(void);
-	std::shared_ptr<Light> getLight(unsigned int lightIndex);
-	std::shared_ptr<Camera> getCamera(void);
-	bool mutuallyVisible(std::shared_ptr<Point3D> p, std::shared_ptr<Point3D> q);
+	  unsigned int getNumberObjects(void);
+	  std::shared_ptr<Primitive> getObject(unsigned int objectIndex);
+	  unsigned int getNumberLights(void);
+	  std::shared_ptr<Light> getLight(unsigned int lightIndex);
+	  Camera getCamera(void);
+	  bool mutuallyVisible(Point3D p, Point3D q);
 };
 
 

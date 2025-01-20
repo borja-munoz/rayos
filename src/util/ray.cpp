@@ -2,13 +2,13 @@
 
 Ray::Ray()
 {
-	this->origin = std::make_shared<Point3D>();
-	this->direction = std::make_shared<Vector3D>();
+	this->origin = Point3D();
+	this->direction = Vector3D();
 }
 
-Ray::Ray(const std::shared_ptr<Point3D> p, std::shared_ptr<Vector3D> direction)
+Ray::Ray(const Point3D& p, const Vector3D& direction)
 {
-	this->origin = std::make_shared<Point3D>(*p);
+	this->origin = p;
 	this->direction = direction;
 }
 
@@ -16,35 +16,35 @@ Ray::~Ray()
 {
 }
 
-std::shared_ptr<Point3D> Ray::getOrigin(void)
+Point3D Ray::getOrigin(void) const
 {
 	return(this->origin);  
 }
 
-std::shared_ptr<Vector3D> Ray::getDirection(void)
+Vector3D Ray::getDirection(void) const
 {
-	return(std::make_shared<Vector3D>(*(this->direction)));
+	return(this->direction);
 }
 
-void Ray::setOrigin(std::shared_ptr<Point3D> p)
+void Ray::setOrigin(const Point3D& p)
 {
 	this->origin = p;
 }
 
-void Ray::setDirection(std::shared_ptr<Vector3D> v)
+void Ray::setDirection(const Vector3D& v)
 {
 	this->direction = v;
 }
 
 // Calculates a point in the ray using the parametric equation
-std::shared_ptr<Point3D> Ray::pointParametric(real t)
+Point3D Ray::pointParametric(real t) const
 {
-	std::shared_ptr<Vector3D> tD;
-	std::shared_ptr<Point3D> p;
+	Vector3D tD;
+	Point3D p;
 	
-	tD = this->direction->product(t);
+	tD = this->direction.product(t);
 	
-	p = this->origin->sum(tD);
+	p = this->origin.sum(tD);
 
 	return(p);
 }

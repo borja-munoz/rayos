@@ -2,43 +2,43 @@
 
 Triangle::Triangle()
 {
-  std::shared_ptr<Vector3D> aux1, aux2;
+  Vector3D aux1, aux2;
 
-  this->vertex[0] = std::make_shared<Point3D>(-1, 0, 0);
-  this->vertex[1] = std::make_shared<Point3D>(0, 1, 0);
-  this->vertex[2] = std::make_shared<Point3D>(1, 0, 0);
+  this->vertex[0] = Point3D(-1, 0, 0);
+  this->vertex[1] = Point3D(0, 1, 0);
+  this->vertex[2] = Point3D(1, 0, 0);
 
-  aux1 = this->vertex[1]->substract(this->vertex[0]);
-  aux2 = this->vertex[2]->substract(this->vertex[0]);
-  this->normal = aux1->crossProduct(aux2);
-  this->normal->normalize();
-  this->distance = -(this->normal->x * this->vertex[0]->x +
-                     this->normal->y * this->vertex[0]->y +
-                     this->normal->z * this->vertex[0]->z);
+  aux1 = this->vertex[1].substract(this->vertex[0]);
+  aux2 = this->vertex[2].substract(this->vertex[0]);
+  this->normal = aux1.crossProduct(aux2);
+  this->normal.normalize();
+  this->distance = -(this->normal.x * this->vertex[0].x +
+                     this->normal.y * this->vertex[0].y +
+                     this->normal.z * this->vertex[0].z);
 
-  this->material = std::make_shared<Material>();
+  this->material = Material();
 
   this->type = TRIANGLE;
 }
 
-Triangle::Triangle(std::shared_ptr<Point3D> x,
-                   std::shared_ptr<Point3D> y,
-                   std::shared_ptr<Point3D> z,
-                   std::shared_ptr<Material> mat)
+Triangle::Triangle(Point3D x,
+                   Point3D y,
+                   Point3D z,
+                   Material mat)
 {
-  std::shared_ptr<Vector3D> aux1, aux2;
+  Vector3D aux1, aux2;
 
   this->vertex[0] = x;
   this->vertex[1] = y;
   this->vertex[2] = z;
 
-  aux1 = this->vertex[1]->substract(this->vertex[0]);
-  aux2 = this->vertex[2]->substract(this->vertex[0]);
-  this->normal = aux1->crossProduct(aux2);
-  this->normal->normalize();
-  this->distance = -(this->normal->x * this->vertex[0]->x +
-                     this->normal->y * this->vertex[0]->y +
-                     this->normal->z * this->vertex[0]->z);
+  aux1 = this->vertex[1].substract(this->vertex[0]);
+  aux2 = this->vertex[2].substract(this->vertex[0]);
+  this->normal = aux1.crossProduct(aux2);
+  this->normal.normalize();
+  this->distance = -(this->normal.x * this->vertex[0].x +
+                     this->normal.y * this->vertex[0].y +
+                     this->normal.z * this->vertex[0].z);
 
   this->material = mat;
 
@@ -50,12 +50,12 @@ Triangle::Triangle(std::shared_ptr<Point3D> x,
 // - Hit point
 // - Normal on the hit point
 // If not, returns NULL (0)
-real Triangle::intersect(std::shared_ptr<Ray> r, Vector3D &normal)
+real Triangle::intersect(const Ray& r, Vector3D &normal) const
 {
   int crosses;
   real denominator, t, x0, y0, x1, y1;
-  std::shared_ptr<Point3D> intersection, rayOrigin;
-  std::shared_ptr<Vector3D> rayDirection;
+  Point3D intersection, rayOrigin;
+  Vector3D rayDirection;
 
   // We calculate intersection between the ray and the triangle plane
 
@@ -66,35 +66,35 @@ real Triangle::intersect(std::shared_ptr<Ray> r, Vector3D &normal)
   //        (P - P') * Normal = 0
   // where P and P' are points beloging to the plane
   // We can substitute the ray in that equation
-  rayDirection = r->getDirection();
-  denominator = rayDirection->dotProduct(this->normal);
+  rayDirection = r.getDirection();
+  denominator = rayDirection.dotProduct(this->normal);
   if (ZERO(denominator))
   {
     return (0);
   }
 
-  rayOrigin = r->getOrigin();
-  std::shared_ptr<Vector3D> oV0;
-  oV0 = rayOrigin->substract(this->vertex[0]);
-  t = -(oV0->dotProduct(this->normal)) / denominator;
+  rayOrigin = r.getOrigin();
+  Vector3D oV0;
+  oV0 = rayOrigin.substract(this->vertex[0]);
+  t = -(oV0.dotProduct(this->normal)) / denominator;
 
-  std::shared_ptr<Vector3D> td;
-  td = rayDirection->product(t);
-  intersection = rayOrigin->sum(td);
+  Vector3D td;
+  td = rayDirection.product(t);
+  intersection = rayOrigin.sum(td);
 
   // We calculate the greater normal vector component (absolute value)
   // to select the plane where we will do the projection (the one that maximizes the projected region)
   char greater;
-  if (fabs(this->normal->x) > fabs(this->normal->y))
+  if (fabs(this->normal.x) > fabs(this->normal.y))
   {
-    if (fabs(this->normal->x) > fabs(this->normal->z))
+    if (fabs(this->normal.x) > fabs(this->normal.z))
       greater = 'X';
     else
       greater = 'Z';
   }
   else
   {
-    if (fabs(this->normal->y) > fabs(this->normal->z))
+    if (fabs(this->normal.y) > fabs(this->normal.z))
       greater = 'Y';
     else
       greater = 'Z';
@@ -104,12 +104,12 @@ real Triangle::intersect(std::shared_ptr<Ray> r, Vector3D &normal)
   crosses = 0;
   if (greater == 'X') // 'X' is the greater, we project over YZ plane
   {
-    x0 = this->vertex[2]->z - intersection->z;
-    y0 = this->vertex[2]->y - intersection->y;
+    x0 = this->vertex[2].z - intersection.z;
+    y0 = this->vertex[2].y - intersection.y;
     for (int i = 0; i < 3; i++)
     {
-      x1 = this->vertex[i]->z - intersection->z;
-      y1 = this->vertex[i]->y - intersection->y;
+      x1 = this->vertex[i].z - intersection.z;
+      y1 = this->vertex[i].y - intersection.y;
       if (y0 > 0)
       {
         if (y1 <= 0)
@@ -128,12 +128,12 @@ real Triangle::intersect(std::shared_ptr<Ray> r, Vector3D &normal)
   }
   else if (greater == 'Y') // 'Y' is the greater, we project over XZ plane
   {
-    x0 = this->vertex[2]->x - intersection->x;
-    y0 = this->vertex[2]->z - intersection->z;
+    x0 = this->vertex[2].x - intersection.x;
+    y0 = this->vertex[2].z - intersection.z;
     for (int i = 0; i < 3; i++)
     {
-      x1 = this->vertex[i]->x - intersection->x;
-      y1 = this->vertex[i]->z - intersection->z;
+      x1 = this->vertex[i].x - intersection.x;
+      y1 = this->vertex[i].z - intersection.z;
       if (y0 > 0)
       {
         if (y1 <= 0)
@@ -152,12 +152,12 @@ real Triangle::intersect(std::shared_ptr<Ray> r, Vector3D &normal)
   }
   else // 'Z' is the greater, we project over XY plane
   {
-    x0 = this->vertex[2]->x - intersection->x;
-    y0 = this->vertex[2]->y - intersection->y;
+    x0 = this->vertex[2].x - intersection.x;
+    y0 = this->vertex[2].y - intersection.y;
     for (int i = 0; i < 3; i++)
     {
-      x1 = this->vertex[i]->x - intersection->x;
-      y1 = this->vertex[i]->y - intersection->y;
+      x1 = this->vertex[i].x - intersection.x;
+      y1 = this->vertex[i].y - intersection.y;
       if (y0 > 0)
       {
         if (y1 <= 0)
@@ -178,9 +178,9 @@ real Triangle::intersect(std::shared_ptr<Ray> r, Vector3D &normal)
   // If there is an odd number of crosses, there is an intersection
   if (crosses & 1)
   {
-    normal.x = this->normal->x;
-    normal.y = this->normal->y;
-    normal.z = this->normal->z;
+    normal.x = this->normal.x;
+    normal.y = this->normal.y;
+    normal.z = this->normal.z;
   }
   else
     t = 0;

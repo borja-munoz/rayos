@@ -2,27 +2,27 @@
 
 Light::Light()
 {
-    this->color = std::make_shared<Color>();
+    this->color = Color();
 	this->intensity = 1.0;
 }
 
-Light::Light(std::shared_ptr<Color> color, real intensity)
+Light::Light(Color color, real intensity)
 {
     this->color = color;
 	this->intensity = intensity;
 }
 
-std::shared_ptr<Color> Light::getColor(void)
+Color Light::getColor(void) const
 {
 	return(this->color);
 }
 
-real Light::getIntensity(void)
+real Light::getIntensity(void) const
 {
 	return(this->intensity);
 }
 
-void Light::setColor(std::shared_ptr<Color> color)
+void Light::setColor(Color color)
 {
     this->color = color;
 }

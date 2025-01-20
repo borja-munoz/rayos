@@ -29,17 +29,17 @@ std::shared_ptr<Bitmap> StochasticRayTracer::trace(std::shared_ptr<Scene> s)
   unsigned int rx, ry;
   Color rad, radiance;
   std::shared_ptr<Bitmap> im;
-  std::shared_ptr<Camera> cam;
-  std::shared_ptr<Point3D> viewer;
-  vector<std::shared_ptr<Ray>> eyeRays;
-  std::shared_ptr<Ray> eyeRay;
+  Camera cam;
+  Point3D viewer;
+  vector<Ray> eyeRays;
+  Ray eyeRay;
   vector<real> probLight;
 
   cam = s->getCamera();
 
-  viewer = cam->getLocation();
+  viewer = cam.getLocation();
 
-  cam->getResolution(rx, ry);
+  cam.getResolution(rx, ry);
   im = std::make_shared<Bitmap>(rx, ry);
 
   // We pre-calculate the probability of points in each light source (uniform distribution)
@@ -91,7 +91,7 @@ std::shared_ptr<Bitmap> StochasticRayTracer::trace(std::shared_ptr<Scene> s)
 
           if (this->sampleRays == 1)
           {
-            eyeRay = cam->getEyeRay(pixelX, pixelY);
+            eyeRay = cam.getEyeRay(pixelX, pixelY);
 
             radiance = traceRay(eyeRay, s, probLight, viewer);
           }
@@ -99,7 +99,7 @@ std::shared_ptr<Bitmap> StochasticRayTracer::trace(std::shared_ptr<Scene> s)
           {
             // We send several rays for each pixel to reduce
             // aliasing and improve image quality
-            eyeRays = cam->getSampleEyeRays(pixelX, pixelY, this->sampleRays);
+            eyeRays = cam.getSampleEyeRays(pixelX, pixelY, this->sampleRays);
             radiance = Color(0, 0, 0);
             for (unsigned int k = 0; k < this->sampleRays; k++)
             {
@@ -142,14 +142,13 @@ std::shared_ptr<Bitmap> StochasticRayTracer::trace(std::shared_ptr<Scene> s)
   return (im);
 }
 
-Color StochasticRayTracer::traceRay(std::shared_ptr<Ray> r,
+Color StochasticRayTracer::traceRay(const Ray& r,
                                     std::shared_ptr<Scene> s,
                                     std::vector<real> probLight,
-                                    std::shared_ptr<Point3D> viewer)
+                                    Point3D viewer)
 {
   Color radiance;
-  std::shared_ptr<Vector3D> radianceDirection;
-  std::shared_ptr<HitPoint> h;
+  Vector3D radianceDirection;
 
   // The RayTrace must intersect the ray with all the objects
   // in the scene and calculate the nearest to the viewer.
@@ -157,21 +156,21 @@ Color StochasticRayTracer::traceRay(std::shared_ptr<Ray> r,
 
   // Chrono *c1 = new Chrono();
   // c1->start();
-  h = this->getHitPoint(r, s);
+  auto h = this->getHitPoint(r, s);
   // c1->stop();
   // this->timeStats.timeGetHitPoint += c1->value() * 1000;
   // cout << "\ngetHitPoint elapsed time = " << c1->value() * 1000 << " milliseconds\n";
 
   // If we have a hitpoint, we must calculate radiance emitted in the viewer direction
-  if (h != 0)
+  if (h)
   {
     // Direction where we need to find the radiance
     // Chrono *c2 = new Chrono();
     // c2->start();
-    radianceDirection = viewer->substract(h->hitPoint);
-    radianceDirection->normalize();
+    radianceDirection = viewer.substract((*h).hitPoint);
+    radianceDirection.normalize();
 
-    radiance = this->calculateRadiance(h, radianceDirection, s, probLight);
+    radiance = this->calculateRadiance(*h, radianceDirection, s, probLight);
     // c2->stop();
     // this->timeStats.timeCalculateRadiance += c2->value() * 1000;
     // cout << "calculateRadiance elapsed time = " << c2->value() * 1000 << " milliseconds\n";
@@ -187,8 +186,8 @@ Color StochasticRayTracer::traceRay(std::shared_ptr<Ray> r,
 // dir        : Direction
 // nearest    : Nearest intersected object index
 // normal     : Nearest object normal in the hitpoint
-Color StochasticRayTracer::calculateRadiance(std::shared_ptr<HitPoint> h,
-                                             std::shared_ptr<Vector3D> dir,
+Color StochasticRayTracer::calculateRadiance(HitPoint h,
+                                             Vector3D dir,
                                              std::shared_ptr<Scene> s,
                                              std::vector<real> probLight)
 {
@@ -232,20 +231,20 @@ Color StochasticRayTracer::calculateRadiance(std::shared_ptr<HitPoint> h,
 
 // Calculates emitted radiance
 Color StochasticRayTracer::emittedRadiance(std::shared_ptr<Scene> s,
-                                           std::shared_ptr<HitPoint> h)
+                                           HitPoint h)
 {
   Color radiance;
   real ke;
-  std::shared_ptr<Material> mat;
-  std::shared_ptr<Color> matColor;
+  Material mat;
+  Color matColor;
 
-  std::shared_ptr<Primitive> object = s->object[h->nearestObject];
+  std::shared_ptr<Primitive> object = s->object[h.nearestObject];
   mat = object->getMaterial();
-  ke = mat->getKe();
-  matColor = mat->getColor();
+  ke = mat.getKe();
+  matColor = mat.getColor();
   if (ke > 0)
   {
-    radiance = (*matColor) * ke;
+    radiance = matColor * ke;
   }
   else
   {
@@ -257,9 +256,9 @@ Color StochasticRayTracer::emittedRadiance(std::shared_ptr<Scene> s,
 
 // Calculates direct lighting given a hitpoint
 Color StochasticRayTracer::directLighting(std::shared_ptr<Scene> s,
-                                          std::shared_ptr<HitPoint> h,
+                                          HitPoint h,
                                           std::vector<real> probLight,
-                                          std::shared_ptr<Vector3D> dir)
+                                          Vector3D dir)
 {
 
   // In order to calculate direct lighting, we send rays to the light sources (shadow rays)
@@ -274,12 +273,12 @@ Color StochasticRayTracer::directLighting(std::shared_ptr<Scene> s,
 
   Color radiance, rad;
   int lightIndex;
-  std::shared_ptr<Point3D> lightPoint;
+  Point3D lightPoint;
   real distancePointLight, geometryTerm;
   bool lightVisible;
-  std::shared_ptr<Vector3D> L, lightNormal;
+  Vector3D L, lightNormal;
   std::shared_ptr<Primitive> object;
-  std::shared_ptr<Material> mat;
+  Material mat;
   std::shared_ptr<Light> selectedLight;
 
   radiance = Color(0, 0, 0);
@@ -294,16 +293,16 @@ Color StochasticRayTracer::directLighting(std::shared_ptr<Scene> s,
     lightNormal = selectedLight->getNormal();
 
     // Ray from hitpoint to light point
-    L = lightPoint->substract(h->hitPoint);
-    distancePointLight = L->length();
-    L->normalize();
+    L = lightPoint.substract(h.hitPoint);
+    distancePointLight = L.length();
+    L.normalize();
 
     // Check if we can see the light point from the hitpoint
     // Chrono *c = new Chrono();
     // c->start();
     // lightVisible = s->mutuallyVisible(h->hitPoint, lightPoint);
     // Avoid shadow acne by displacing the hitpoint a bit in the direction of the normal
-    lightVisible = s->mutuallyVisible(h->hitPoint->sum(h->normal->product(1e-4)), lightPoint);
+    lightVisible = s->mutuallyVisible(h.hitPoint.sum(h.normal.product(1e-4)), lightPoint);
     // lightVisible = true;
     // c->stop();
     // this->timeStats.timeMutuallyVisible += c->value() * 1000;
@@ -319,11 +318,11 @@ Color StochasticRayTracer::directLighting(std::shared_ptr<Scene> s,
       //   object ID with the number of light sources in the scene
 
       // object = e->getObject(nearestObject);
-      object = s->object[h->nearestObject];
+      object = s->object[h.nearestObject];
       mat = object->getMaterial();
-      rad = this->BRDF(mat, *(h->normal), L, dir);
+      rad = this->BRDF(mat, h.normal, L, dir);
 
-      geometryTerm = (h->normal->dotProduct(L) * lightNormal->dotProduct(L)) /
+      geometryTerm = (h.normal.dotProduct(L) * lightNormal.dotProduct(L)) /
                      (distancePointLight * distancePointLight);
 
       // for (unsigned int x = 0; x < 3; x++)
@@ -340,28 +339,27 @@ Color StochasticRayTracer::directLighting(std::shared_ptr<Scene> s,
 
 // Indirect light in a given object point
 Color StochasticRayTracer::indirectLighting(std::shared_ptr<Scene> s,
-                                            std::shared_ptr<HitPoint> h,
+                                            HitPoint h,
                                             std::vector<real> probLight)
 {
   Color radiance, radIndirectRay, brdf;
   real alfa, P, random, factor;
-  std::shared_ptr<Vector3D> psi, radianceDirection;
-  std::shared_ptr<Ray> r;
-  std::shared_ptr<HitPoint> hPsi;
+  Vector3D psi, radianceDirection;
+  Ray r;
   std::shared_ptr<Primitive> object;
-  std::shared_ptr<Material> mat;
+  Material mat;
   int lightIndex;
-  std::shared_ptr<Point3D> lightPoint;
+  Point3D lightPoint;
   bool lightVisible;
-  std::shared_ptr<Vector3D> L, lightNormal;
+  Vector3D L, lightNormal;
   std::shared_ptr<Light> selectedLight;
   real distancePointLight;
 
   // Initialize
   alfa = (real)0.8; // Alfa is the material absortion probability
   P = 1 - alfa;
-  r = std::make_shared<Ray>();
-  r->setOrigin(h->hitPoint);
+  r = Ray();
+  r.setOrigin(h.hitPoint);
 
   // We send a ray from the hitpoint to the light point
   // We should select the light source probabilistically
@@ -381,17 +379,17 @@ Color StochasticRayTracer::indirectLighting(std::shared_ptr<Scene> s,
       psi = this->getRandomDirection();
 
       // We calculate the point seen from the hitpoint in direction "psi"
-      r->setDirection(psi);
-      hPsi = this->getHitPoint(r, s);
+      r.setDirection(psi);
+      auto hPsi = this->getHitPoint(r, s);
 
       // If we have a hitpoint, calculate radiance emitted in direction psi
-      if (hPsi != 0)
+      if (hPsi)
       {
         // Direction
-        radianceDirection = h->hitPoint->substract(hPsi->hitPoint);
-        radianceDirection->normalize();
+        radianceDirection = h.hitPoint.substract((*hPsi).hitPoint);
+        radianceDirection.normalize();
 
-        radIndirectRay = this->calculateRadiance(hPsi, radianceDirection, s, probLight);
+        radIndirectRay = this->calculateRadiance(*hPsi, radianceDirection, s, probLight);
 
         // We should multiply radiance by the following factor:
         // BRDF(intersection) * cos(Nx, Psi) / pdf(Psi)
@@ -409,9 +407,9 @@ Color StochasticRayTracer::indirectLighting(std::shared_ptr<Scene> s,
         lightNormal = selectedLight->getNormal();
 
         // Ray from hitpoint to light point
-        L = lightPoint->substract(hPsi->hitPoint);
-        distancePointLight = L->length();
-        L->normalize();
+        L = lightPoint.substract((*hPsi).hitPoint);
+        distancePointLight = L.length();
+        L.normalize();
 
         // Check if we can see the light point from the hitpoint
         lightVisible = s->mutuallyVisible(hPsi->hitPoint, lightPoint);
@@ -419,10 +417,10 @@ Color StochasticRayTracer::indirectLighting(std::shared_ptr<Scene> s,
         // If it is visible, we calculate reflected radiance from the light source
         if (lightVisible)
         {
-          object = s->object[h->nearestObject];
+          object = s->object[h.nearestObject];
           mat = object->getMaterial();
-          brdf = this->BRDF(mat, *(h->normal), L, radianceDirection);
-          factor = h->normal->dotProduct(psi) / (2 * PI_RAYOS);
+          brdf = this->BRDF(mat, h.normal, L, radianceDirection);
+          factor = h.normal.dotProduct(psi) / (2 * PI_RAYOS);
           radiance += radIndirectRay * brdf * factor;
         }
       }
@@ -445,9 +443,9 @@ Color StochasticRayTracer::indirectLighting(std::shared_ptr<Scene> s,
 // Returns a random direction to send a ray
 // From Flipcode - Code of the Day
 // http://www.flipcode.com/cgi-bin/msg.cgi?showThread=COTD-RandomUnitVectors&forum=cotd&id=-1
-std::shared_ptr<Vector3D> StochasticRayTracer::getRandomDirection(void)
+Vector3D StochasticRayTracer::getRandomDirection(void)
 {
-  std::shared_ptr<Vector3D> dir;
+  Vector3D dir;
 
   real z = getRandomNumber(0.0, 1.0); // We should use (-1, 1) for a sphere
   real a = getRandomNumber(0.0, 2 * PI_RAYOS);
@@ -457,7 +455,7 @@ std::shared_ptr<Vector3D> StochasticRayTracer::getRandomDirection(void)
   real x = r * cosf(a);
   real y = r * sinf(a);
 
-  dir = std::make_shared<Vector3D>(x, y, z);
+  dir = Vector3D(x, y, z);
 
   return (dir);
 }

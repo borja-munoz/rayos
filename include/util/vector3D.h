@@ -53,20 +53,18 @@ class Vector3D
 
     }
 
-    inline real dotProduct(std::shared_ptr<Vector3D> v) const
+    inline real dotProduct(const Vector3D& v) const
     {
-        return(this->x * v->x + this->y * v->y + this->z * v->z);
+        return(this->x * v.x + this->y * v.y + this->z * v.z);
     }
 
-    inline std::shared_ptr<Vector3D> crossProduct(std::shared_ptr<Vector3D> v) const
+    inline Vector3D crossProduct(const Vector3D& v) const
     {
-        std::shared_ptr<Vector3D> resultado = std::make_shared<Vector3D>();
-    
-        resultado->x = this->y * v->z - this->z * v->y;
-        resultado->y = this->z * v->x - this->x * v->z;
-        resultado->z = this->x * v->y - this->y * v->x;
-    
-        return(resultado);
+        return Vector3D(
+            this->y * v.z - this->z * v.y,
+            this->z * v.x - this->x * v.z,
+            this->x * v.y - this->y * v.x
+        );
     }
 
     inline real length(void) const
@@ -85,25 +83,25 @@ class Vector3D
         this->z /= length;
     }
 
-    inline std::shared_ptr<Vector3D> sum(std::shared_ptr<Vector3D> v) const
+    inline Vector3D sum(const Vector3D& v) const
     {
-        return(std::make_shared<Vector3D>(this->x + v->x, 
-                                          this->y + v->y, 
-                                          this->z + v->z));
+        return(Vector3D(this->x + v.x, 
+                        this->y + v.y, 
+                        this->z + v.z));
     }
 
-    inline std::shared_ptr<Vector3D> substract(std::shared_ptr<Vector3D> v) const
+    inline Vector3D substract(const Vector3D& v) const
     {
-        return(std::make_shared<Vector3D>(this->x - v->x, 
-                                          this->y - v->y, 
-                                          this->z - v->z));
+        return(Vector3D(this->x - v.x, 
+                        this->y - v.y, 
+                        this->z - v.z));
     }
 
-    inline std::shared_ptr<Vector3D> product(real d) const
+    inline Vector3D product(real d) const
     {
-        return(std::make_shared<Vector3D>(this->x * d,
-                                          this->y * d,
-                                          this->z * d));
+        return(Vector3D(this->x * d,
+                        this->y * d,
+                        this->z * d));
     }
 
 };

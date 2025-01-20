@@ -11,16 +11,16 @@
 
 class PointLight : public Light
 {
-	std::shared_ptr<Point3D> location;
+	Point3D location;
 
   public: 
 	PointLight();
-	PointLight(std::shared_ptr<Point3D> location, std::shared_ptr<Color> color, real intensity);
-	std::shared_ptr<Point3D> getLocation(void);
-	void setLocation(std::shared_ptr<Point3D> p);
-	std::shared_ptr<Point3D> getSamplePoint(void);
-	real getArea(void);
-	std::shared_ptr<Vector3D> getNormal(void);
+	PointLight(Point3D location, Color color, real intensity);
+	Point3D getLocation(void) const;
+	void setLocation(Point3D p);
+	Point3D getSamplePoint(void) const;
+	real getArea(void) const;
+	Vector3D getNormal(void) const;
 };
 
 

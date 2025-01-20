@@ -27,8 +27,8 @@ class Point3D
 	Point3D();
 	Point3D(real x, real y, real z);
 	Point3D(const Point3D &p);
-	std::shared_ptr<Point3D> sum(std::shared_ptr<Vector3D> v);
-	std::shared_ptr<Vector3D> substract(std::shared_ptr<Point3D> p);
+	Point3D sum(const Vector3D& v) const;
+	Vector3D substract(const Point3D& p) const;
 };
 
 #endif

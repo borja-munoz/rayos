@@ -5,7 +5,7 @@ Primitive::Primitive()
 
 }
 
-std::shared_ptr<Material> Primitive::getMaterial(void)
+Material Primitive::getMaterial(void)
 {
     return(this->material);
 }
