@@ -69,7 +69,10 @@ TriangleMesh::TriangleMesh(std::vector<Point3D> vertices,
 // - Hit point (parametric parameter on the ray)
 // - Normal on the hit point
 // If not, returns NULL (0)
-real TriangleMesh::intersect(const Ray& r, Vector3D &normal) const
+real TriangleMesh::intersect(const Ray& r, 
+                             Vector3D &normal, 
+                             real tMin, 
+                             real tMax) const
 {
     // Triangle tri;
     // int triIndex;
@@ -102,14 +105,14 @@ real TriangleMesh::intersect(const Ray& r, Vector3D &normal) const
     float tNear;
     Vector3D auxNormal;
 
-    tNear = std::numeric_limits<float>::infinity();
+    tNear = tMax;
     for (Triangle tri : this->triangles) 
     {
-        real t = tri.intersect(r, auxNormal);
+        real t = tri.intersect(r, auxNormal, 0.001f, tNear);
 
         if (t) 
         {
-            if ((t > 0) && (t < tNear))
+            if ((t > tMin) && (t < tNear))
             {
                 tNear = t;
                 normal = auxNormal;
@@ -191,3 +194,15 @@ void TriangleMesh::generatePolySphere(float radius, int divisions)
 
 }
 
+AABB TriangleMesh::boundingBox() const
+{
+    AABB bounds;
+
+    // Iterate over all triangles in the mesh and expand the bounding box
+    for (const Triangle& triangle : triangles) {
+        AABB triangleBounds = triangle.boundingBox();
+        bounds.expand(triangleBounds);
+    }
+
+    return bounds;    
+}

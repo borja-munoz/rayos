@@ -34,9 +34,10 @@ class TriangleMesh : public Primitive
 	TriangleMesh(std::vector<Point3D> vertices, 
                std::vector<int> vertexIndexes, 
                Material mat);
-	real intersect(const Ray& r, Vector3D &normal) const;
+	real intersect(const Ray& r, Vector3D &normal, real tMin, real tMax) const;
   int getNumberTriangles();
   int getNumberVertices();
+	AABB boundingBox() const;
   
   private:
     void generatePolySphere(float radius, int divisions);

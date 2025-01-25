@@ -1,27 +1,23 @@
 #ifndef _TRACER_H
 #define _TRACER_H
 
+#include "brdf.h"
+#include "hitPoint.h"
+
 #include "../scene.h"
 #include "../bitmap.h"
-#include "../util/point3D.h"
-#include "../util/ray.h"
-#include "../util/vector3D.h"
+
+#include "../geom/primitive.h"
+
+#include "../util/camera.h"
 #include "../util/light.h"
 #include "../util/material.h"
-#include "../geom/primitive.h"
-#include "brdf.h"
-#include "../util/camera.h"
+#include "../util/point3D.h"
+#include "../util/ray.h"
 #include "../util/util.h"
+#include "../util/vector3D.h"
 
 #include <memory>
-
-// Struct to store intersection information
-typedef struct
-{
-	Point3D hitPoint; 	// Hit Point between Ray and Scene
-	int nearestObject;	// Index for nearest object intersected by the ray
-	Vector3D normal;		// Object normal in the point intersected by the ray
-} HitPoint;
 
 // Struct to store render stats
 typedef struct RS {

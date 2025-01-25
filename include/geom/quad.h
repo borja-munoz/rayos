@@ -32,10 +32,11 @@ class Quad : public Primitive
          Point3D d, 
          Material mat);
 	Vector3D getNormal(void) const;
-	real intersect(const Ray& r, Vector3D& normal) const;
+	real intersect(const Ray& r, Vector3D& normal, real tMin, real tMax) const;
 	vector<Triangle> tessellate(void) const;
 	real getArea(void) const;
 	vector<Point3D> getCoordinates(void) const; 
+	AABB boundingBox() const;
 };
 
 

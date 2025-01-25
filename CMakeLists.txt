@@ -17,6 +17,9 @@ set(SOURCES
     src/rayos.cpp
     src/scene.cpp
 
+    src/geom/AABB.cpp
+    src/geom/BVH.cpp
+    src/geom/BVHNode.cpp
     src/geom/primitive.cpp
     src/geom/quad.cpp
     src/geom/sphere.cpp

@@ -51,27 +51,26 @@ Triangle::Triangle(Point3D x,
 // - Normal on the hit point
 // If not, returns 0
 // Möller-Trumbore ray-triangle intersection
-real Triangle::intersect(const Ray& ray, Vector3D& normal) const
+real Triangle::intersect(const Ray& ray, Vector3D& normal, real tMin, real tMax) const
 {
     Vector3D edge1, edge2;
     Vector3D h, s, q;
     real a, f, u, v;
-    real epsilon = 1e-6;
 
     // Compute edges of the triangle
     edge1 = this->vertex[1].substract(this->vertex[0]); // edge1 = v1 - v0
     edge2 = this->vertex[2].substract(this->vertex[0]); // edge2 = v2 - v0
 
     // Compute the determinant
-    h = ray.getDirection().crossProduct(edge2); // h = direction × edge2
+    h = ray.direction.crossProduct(edge2); // h = direction × edge2
     a = edge1.dotProduct(h); // a = edge1 · h
 
     // Check if the ray is parallel to the triangle
-    if (std::fabs(a) < epsilon)
+    if (std::fabs(a) < tMin)
         return 0; // No intersection
 
     f = 1.0f / a; // Inverse of determinant
-    s = ray.getOrigin().substract(this->vertex[0]); // s = origin - v0
+    s = ray.origin.substract(this->vertex[0]); // s = origin - v0
     u = f * s.dotProduct(h); // Compute barycentric coordinate u
 
     // Check if the intersection is outside the triangle
@@ -79,7 +78,7 @@ real Triangle::intersect(const Ray& ray, Vector3D& normal) const
         return 0;
 
     q = s.crossProduct(edge1); // q = s × edge1
-    v = f * ray.getDirection().dotProduct(q); // Compute barycentric coordinate v
+    v = f * ray.direction.dotProduct(q); // Compute barycentric coordinate v
 
     // Check if the intersection is outside the triangle
     if (v < 0.0f || u + v > 1.0f)
@@ -88,8 +87,8 @@ real Triangle::intersect(const Ray& ray, Vector3D& normal) const
     // Compute the distance to the intersection point
     float t = f * edge2.dotProduct(q);
 
-    // Check if the intersection is behind the ray
-    if (t > epsilon) {
+    // Check if the intersection is valid
+    if (t >= tMin && t <= tMax) {
         normal = this->normal;
         return t; // Intersection found, return the distance
     }
@@ -235,3 +234,24 @@ real Triangle::intersect(const Ray& ray, Vector3D& normal) const
 
 //   return (t);
 // }
+
+AABB Triangle::boundingBox() const
+{
+    // Initialize min and max points to the first vertex
+    Point3D min = vertex[0];
+    Point3D max = vertex[0];
+
+    // Loop through the remaining vertices to find min and max for each axis
+    for (int i = 1; i < 3; ++i) {
+        min.x = std::min(min.x, vertex[i].x);
+        min.y = std::min(min.y, vertex[i].y);
+        min.z = std::min(min.z, vertex[i].z);
+
+        max.x = std::max(max.x, vertex[i].x);
+        max.y = std::max(max.y, vertex[i].y);
+        max.z = std::max(max.z, vertex[i].z);
+    }
+
+    // Return the AABB constructed with min and max points
+    return AABB(min, max);
+};

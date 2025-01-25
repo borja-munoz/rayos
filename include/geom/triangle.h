@@ -21,7 +21,8 @@ class Triangle : public Primitive
              Point3D y, 
              Point3D z, 
              Material mat);
-	real intersect(const Ray& r, Vector3D &normal) const;
+	real intersect(const Ray& r, Vector3D &normal, real tMin, real tMax) const;
+	AABB boundingBox() const;
 };
 
 

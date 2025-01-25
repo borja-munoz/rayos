@@ -112,23 +112,21 @@ Vector3D Quad::getNormal(void) const
 // - Hit point
 // - Normal on the hit point
 // If not, returns NULL (0)
-real Quad::intersect(const Ray& r, Vector3D& normal) const
+real Quad::intersect(const Ray& r, Vector3D& normal, real tMin, real tMax) const
 {
 	Point3D intersection;
 	real t, a0, b0, a1, b1;
 	unsigned int crosses;
 
     // If ray is parallel to polygon, there is no intersection 
-	Vector3D rayDirection = r.getDirection();
-	t = rayDirection.dotProduct(this->normal);
+	t = r.direction.dotProduct(this->normal);
     if (ZERO(t)) 
 	{
 		return(0);
 	}
 
     // We calculate intersection between the ray and the polygon plane 
-	Point3D rayOrigin = r.getOrigin();
-	Vector3D vec1 = this->vertex[0].substract(rayOrigin);
+	Vector3D vec1 = this->vertex[0].substract(r.origin);
 	t = vec1.dotProduct(this->normal) / t;
 	intersection = r.pointParametric(t);
 
@@ -256,4 +254,23 @@ vector<Point3D> Quad::getCoordinates(void) const
 	return(coordinates);
 }
 
+AABB Quad::boundingBox() const
+{
+    // Initialize min and max points to the first vertex
+    Point3D min = vertex[0];
+    Point3D max = vertex[0];
 
+    // Loop through the remaining vertices to find min and max for each axis
+    for (int i = 1; i < 4; ++i) { // Iterate over the remaining 3 vertices
+        min.x = std::min(min.x, vertex[i].x);
+        min.y = std::min(min.y, vertex[i].y);
+        min.z = std::min(min.z, vertex[i].z);
+
+        max.x = std::max(max.x, vertex[i].x);
+        max.y = std::max(max.y, vertex[i].y);
+        max.z = std::max(max.z, vertex[i].z);
+    }
+
+    // Return the AABB constructed with min and max points
+    return AABB(min, max);    
+};

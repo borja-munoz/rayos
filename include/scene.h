@@ -1,11 +1,13 @@
 #ifndef _SCENE_H
 #define _SCENE_H
 
+#include "geom/BVH.h"
 #include "geom/primitive.h"
 #include "geom/quad.h"
 #include "geom/sphere.h"
 #include "geom/triangle.h"
 #include "geom/triangleMesh.h"
+#include "tracer/hitPoint.h"
 #include "util/light.h"
 #include "util/pointLight.h"
 #include "util/rectLight.h"
@@ -44,6 +46,7 @@ class Scene
   public:
 
 	  vector<std::shared_ptr<Primitive>> object;       
+    BVH bvh;
 
 	  Scene();
     Scene(const std::string);
@@ -53,6 +56,9 @@ class Scene
 	  std::shared_ptr<Light> getLight(unsigned int lightIndex);
 	  Camera getCamera(void);
 	  bool mutuallyVisible(Point3D p, Point3D q);
+
+    void buildBVH();
+    std::optional<HitPoint> intersect(const Ray& ray, real tMin, real tMax) const;
 };
 
 

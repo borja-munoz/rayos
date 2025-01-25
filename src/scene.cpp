@@ -401,7 +401,7 @@ bool Scene::mutuallyVisible(Point3D p, Point3D q)
   for (unsigned int i = 1; i < numberObjects; i++)
   {
     object = this->object[i];
-    intersection = object->intersect(r, N);
+    intersection = object->intersect(r, N, 0.001, distance);
 
     // If the hitpoint distance is smaller than the distance
     // between the two points, there is an object between them and
@@ -419,4 +419,14 @@ bool Scene::mutuallyVisible(Point3D p, Point3D q)
   }
 
   return (visible);
+}
+
+void Scene::buildBVH() 
+{
+    this->bvh.build(this->object);
+}
+
+std::optional<HitPoint> Scene::intersect(const Ray& ray, real tMin, real tMax) const 
+{
+    return this->bvh.intersect(ray, tMin, tMax);
 }
