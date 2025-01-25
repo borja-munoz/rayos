@@ -24,22 +24,19 @@ Sphere::Sphere(Point3D center, real radius, Material material)
 real Sphere::intersect(const Ray& r, Vector3D &normal)
 {
     real b, c, t, t1, t2, discriminant, squareRoot;
-    Vector3D rayDirection, difRayCenter, n;
-    Point3D rayOrigin, intersection;  
+    Vector3D difRayCenter, n;
+    Point3D intersection;  
   
     // To calculate the intersection, we substitute ray parameters
     // in the sphere equation
     // We need to resolve a second grade equation
     // at^2 + bt + c = 0
 
-    rayDirection = r.getDirection();
-    rayOrigin = r.getOrigin();  
-
-    difRayCenter = rayOrigin.substract(this->center);
+    difRayCenter = r.origin.substract(this->center);
 
     // If we consider the ray direction to be normalized,
     // we don't need to calculate a = Dir * Dir, because the value es 1
-    b = difRayCenter.dotProduct(rayDirection);
+    b = difRayCenter.dotProduct(r.direction);
     c = difRayCenter.dotProduct(difRayCenter) - 
         this->radius * this->radius;
 
@@ -62,8 +59,8 @@ real Sphere::intersect(const Ray& r, Vector3D &normal)
             t = t2;
         }    
 
-        Vector3D tD = rayDirection.product(t);
-        intersection = rayOrigin.sum(tD);
+        Vector3D tD = r.direction.product(t);
+        intersection = r.origin.sum(tD);
 
         n = intersection.substract(this->center);
         //n = this->center->substract(intersection);
