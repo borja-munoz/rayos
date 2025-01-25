@@ -19,6 +19,30 @@ Point3D::Point3D(const Point3D &p)
   this->z = p.z;
 }
 
+// Access operator for x, y, z by index
+real Point3D::operator[](size_t index) const 
+{
+  switch (index) 
+  {
+    case 0: return x;
+    case 1: return y;
+    case 2: return z;
+    default: throw std::out_of_range("Point3D index out of range");
+  }
+}
+
+// Non-const access operator for x, y, z
+real& Point3D::operator[](size_t index) 
+{
+  switch (index) 
+  {
+    case 0: return x;
+    case 1: return y;
+    case 2: return z;
+    default: throw std::out_of_range("Point3D index out of range");
+  }
+}
+
 Point3D Point3D::sum(const Vector3D& v) const
 {
   return(Point3D(this->x + v.x,
