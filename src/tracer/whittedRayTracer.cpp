@@ -56,7 +56,7 @@ Color WhittedRayTracer::traceRay(const Ray& r, std::shared_ptr<Scene> s)
 	{
 		N[i] = std::make_shared<Vector3D>();    
 		object = s->getObject(i);
-		intersection.push_back(object->intersect(r, *N[i]));
+		intersection.push_back(object->intersect(r, *N[i], 0.001, __FLT_MAX__));
 	}
 
 	int nearest = -1;
@@ -69,7 +69,7 @@ Color WhittedRayTracer::traceRay(const Ray& r, std::shared_ptr<Scene> s)
 	for (j = i + 1; j < numberObjects; j++)
 		if ((intersection[j] > 0) && (intersection[j] < intersection[nearest]))
 			nearest = j;
-	hitPoint = r.getOrigin().sum(r.getDirection().product(intersection[nearest]));
+	hitPoint = r.origin.sum(r.direction.product(intersection[nearest]));
 
 	// If we have a hitpoint, we calculate emitted radiance
     // in the viewer direction using the nearest object BRDF
