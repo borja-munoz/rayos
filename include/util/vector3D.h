@@ -3,6 +3,8 @@
 
 #include "util.h"
 
+#include <algorithm> // For std::min and std::max
+
 #include <math.h>
 
 #include <memory>
@@ -51,6 +53,34 @@ class Vector3D
     ~Vector3D()
     {
 
+    }
+
+    static Vector3D min(const Vector3D& a, const Vector3D& b) {
+        return { std::min(a.x, b.x), std::min(a.y, b.y), std::min(a.z, b.z) };
+    }
+
+    static Vector3D max(const Vector3D& a, const Vector3D& b) {
+        return { std::max(a.x, b.x), std::max(a.y, b.y), std::max(a.z, b.z) };
+    }
+
+    // Access operator for x, y, z by index
+    real operator[](size_t index) const {
+        switch (index) {
+            case 0: return x;
+            case 1: return y;
+            case 2: return z;
+            default: throw std::out_of_range("Vector3D index out of range");
+        }
+    }
+
+    // Non-const access operator for x, y, z
+    real& operator[](size_t index) {
+        switch (index) {
+            case 0: return x;
+            case 1: return y;
+            case 2: return z;
+            default: throw std::out_of_range("Vector3D index out of range");
+        }
     }
 
     inline real dotProduct(const Vector3D& v) const
