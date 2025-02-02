@@ -24,18 +24,20 @@
 
 class TriangleMesh : public Primitive
 {
-	std::vector<std::shared_ptr<Point3D>> vertices;       // All the vertices in the mesh
-    std::vector<int> vertexIndexes;      
-    int numberTriangles;
+	std::vector<Point3D> vertices;       // All the vertices in the mesh
+  std::vector<int> vertexIndexes;      
+  int numberTriangles;
+  std::vector<Triangle> triangles;
   
   public:
 	TriangleMesh();
-	TriangleMesh(std::vector<std::shared_ptr<Point3D>> vertices, 
-                 std::vector<int> vertexIndexes, 
-                 std::shared_ptr<Material> mat);
-	real intersect(std::shared_ptr<Ray> r, Vector3D &normal);
-    int getNumberTriangles();
-    int getNumberVertices();
+	TriangleMesh(std::vector<Point3D> vertices, 
+               std::vector<int> vertexIndexes, 
+               Material mat);
+	real intersect(const Ray& r, Vector3D &normal, real tMin, real tMax) const;
+  int getNumberTriangles();
+  int getNumberVertices();
+	AABB boundingBox() const;
   
   private:
     void generatePolySphere(float radius, int divisions);

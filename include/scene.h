@@ -1,11 +1,13 @@
 #ifndef _SCENE_H
 #define _SCENE_H
 
+#include "geom/BVH.h"
 #include "geom/primitive.h"
 #include "geom/quad.h"
 #include "geom/sphere.h"
 #include "geom/triangle.h"
 #include "geom/triangleMesh.h"
+#include "tracer/hitPoint.h"
 #include "util/light.h"
 #include "util/pointLight.h"
 #include "util/rectLight.h"
@@ -24,13 +26,13 @@ using namespace std;
 
 class Scene
 {
-	vector<std::shared_ptr<Light>> light;                
-	std::shared_ptr<Camera> camera;                    	
+	  vector<std::shared_ptr<Light>> light;                
+	  Camera camera;                    	
     
-    std::set<std::shared_ptr<pbrt::Object>> alreadyTraversed;
-    std::set<std::shared_ptr<pbrt::Material>> usedMaterials;
+    // std::set<std::shared_ptr<pbrt::Object>> alreadyTraversed;
+    // std::set<std::shared_ptr<pbrt::Material>> usedMaterials;
     
-    void traversePBRT(std::shared_ptr<pbrt::Object>); 
+    // void traversePBRT(std::shared_ptr<pbrt::Object>); 
 
     void createCornellBox();
     std::shared_ptr<Quad> cbLeftWall();
@@ -43,16 +45,20 @@ class Scene
 
   public:
 
-	vector<std::shared_ptr<Primitive>> object;       
+	  vector<std::shared_ptr<Primitive>> object;       
+    BVH bvh;
 
-	Scene();
+	  Scene();
     Scene(const std::string);
-	unsigned int getNumberObjects(void);
-	std::shared_ptr<Primitive> getObject(unsigned int objectIndex);
-	unsigned int getNumberLights(void);
-	std::shared_ptr<Light> getLight(unsigned int lightIndex);
-	std::shared_ptr<Camera> getCamera(void);
-	bool mutuallyVisible(std::shared_ptr<Point3D> p, std::shared_ptr<Point3D> q);
+	  unsigned int getNumberObjects(void);
+	  std::shared_ptr<Primitive> getObject(unsigned int objectIndex);
+	  unsigned int getNumberLights(void);
+	  std::shared_ptr<Light> getLight(unsigned int lightIndex);
+	  Camera getCamera(void);
+	  bool mutuallyVisible(Point3D p, Point3D q);
+
+    void buildBVH();
+    std::optional<HitPoint> intersect(const Ray& ray, real tMin, real tMax) const;
 };
 
 

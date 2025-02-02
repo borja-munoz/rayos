@@ -5,14 +5,14 @@
 
 Material::Material()
 {
-    this->color = std::make_shared<Color>(1.0, 1.0, 1.0);
+    this->color = Color(1.0, 1.0, 1.0);
 	this->ka = 1.0;
 	this->kd = 0.5; 
 	this->ks = 0.5;
     this->ke = 0.0;
 }
 
-std::shared_ptr<Color> Material::getColor(void)
+Color Material::getColor(void)
 {
     return(color);
 }
@@ -37,7 +37,7 @@ real Material::getKe(void)
     return(this->ke);
 }
 
-void Material::set(std::shared_ptr<Color> color, real ka, real kd, real ks, real ke)
+void Material::set(Color color, real ka, real kd, real ks, real ke)
 {
     this->color = color;
   

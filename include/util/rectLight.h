@@ -10,17 +10,17 @@
 
 class RectLight : public Light
 {
-	std::shared_ptr<Quad> location;
+	Quad location;
 
   public:
  
 	RectLight();
-	RectLight(std::shared_ptr<Quad> location, std::shared_ptr<Color> color, real intensity);
-	std::shared_ptr<Quad> getLocation(void);
-	void setLocation(std::shared_ptr<Quad> c);
-	std::shared_ptr<Point3D> getSamplePoint(void);
-	real getArea(void);
-	std::shared_ptr<Vector3D> getNormal(void);
+	RectLight(Quad location, Color color, real intensity);
+	Quad getLocation(void);
+	void setLocation(Quad c);
+	Point3D getSamplePoint(void) const;
+	real getArea(void) const;
+	Vector3D getNormal(void) const;
 };
 
 

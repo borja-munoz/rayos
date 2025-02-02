@@ -1,6 +1,7 @@
 #ifndef _PRIMITIVE_H
 #define _PRIMITIVE_H
 
+#include "AABB.h"
 #include "../util/material.h"
 #include "../util/ray.h"
 #include "../util/util.h"
@@ -23,15 +24,16 @@ typedef enum
 class Primitive
 {
   protected:
-	std::shared_ptr<Material> material;
+	Material material;
 	ObjectType type;
   
   public:
  
 	Primitive();
-	std::shared_ptr<Material> getMaterial(void);
+	Material getMaterial(void);
 	ObjectType getType(void);
-	virtual real intersect(std::shared_ptr<Ray> r, Vector3D &normal) = 0;
+	virtual real intersect(const Ray& r, Vector3D& normal, real tMin, real tMax) const = 0;
+	virtual AABB boundingBox() const = 0;
 };
 
 

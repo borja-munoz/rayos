@@ -21,23 +21,38 @@ TriangleMesh::TriangleMesh()
 
     this->numberTriangles = this->vertexIndexes.size() / 3;
 
+    int j = 0;
+    for (int i = 0; i < this->numberTriangles; i++)
+    {
+        this->triangles.push_back(
+            Triangle(
+                this->vertices[this->vertexIndexes[j]],
+                this->vertices[this->vertexIndexes[j+1]],
+                this->vertices[this->vertexIndexes[j+2]],
+                this->material
+            )
+        );
+
+        j += 3;
+    }
+
     // for (int i = 0; i < this->vertices.size(); i++) 
     // {
     //   std::cout << this->vertices[i]->x << "," << this->vertices[i]->y << "," << this->vertices[i]->z << "\n";
     // }
 
-    this->material = std::make_shared<Material>();
-    this->material->set(
-        std::make_shared<Color>(1.0, 0.2, 1.0),
+    this->material = Material();
+    this->material.set(
+        Color(1.0, 0.2, 1.0),
         1.0, 0.5, 0.5, 0.0
     );
 
     this->type = TRIANGLE_MESH;
 }
 
-TriangleMesh::TriangleMesh(std::vector<std::shared_ptr<Point3D>> vertices, 
+TriangleMesh::TriangleMesh(std::vector<Point3D> vertices, 
                            std::vector<int> vertexIndexes, 
-                           std::shared_ptr<Material> mat)
+                           Material mat)
 {
     this->vertices = vertices;
     this->vertexIndexes = vertexIndexes;
@@ -54,35 +69,58 @@ TriangleMesh::TriangleMesh(std::vector<std::shared_ptr<Point3D>> vertices,
 // - Hit point (parametric parameter on the ray)
 // - Normal on the hit point
 // If not, returns NULL (0)
-real TriangleMesh::intersect(std::shared_ptr<Ray> r, Vector3D &normal)
+real TriangleMesh::intersect(const Ray& r, 
+                             Vector3D &normal, 
+                             real tMin, 
+                             real tMax) const
 {
-    Triangle tri;
-    int triIndex;
-    real t;
-    real tNear;
+    // Triangle tri;
+    // int triIndex;
+    // real t;
+    // real tNear;
+    // Vector3D auxNormal;
+
+    // int j = 0;
+    // tNear = std::numeric_limits<float>::infinity();
+    // for (int i = 0; i < this->numberTriangles; i++)
+    // {
+    //     tri = Triangle(this->vertices[this->vertexIndexes[j]],
+    //                    this->vertices[this->vertexIndexes[j+1]],
+    //                    this->vertices[this->vertexIndexes[j+2]],
+    //                    this->material);
+
+    //     t = tri.intersect(r, auxNormal);
+    //     if ((t > 0) && (t < tNear))
+    //     {
+    //         tNear = t;
+    //         normal = auxNormal;
+    //         triIndex = i;
+    //     }
+
+    //     j += 3;
+    // }
+
+	//   return(tNear);
+
+    float tNear;
     Vector3D auxNormal;
 
-    int j = 0;
-    tNear = std::numeric_limits<float>::infinity();
-    for (int i = 0; i < this->numberTriangles; i++)
+    tNear = tMax;
+    for (Triangle tri : this->triangles) 
     {
-        tri = Triangle(this->vertices[this->vertexIndexes[j]],
-                       this->vertices[this->vertexIndexes[j+1]],
-                       this->vertices[this->vertexIndexes[j+2]],
-                       this->material);
+        real t = tri.intersect(r, auxNormal, 0.001f, tNear);
 
-        t = tri.intersect(r, auxNormal);
-        if ((t > 0) && (t < tNear))
+        if (t) 
         {
-            tNear = t;
-            normal = auxNormal;
-            triIndex = i;
+            if ((t > tMin) && (t < tNear))
+            {
+                tNear = t;
+                normal = auxNormal;
+            }
         }
-
-        j += 3;
     }
 
-	  return(tNear);
+	return(tNear);
 }
 
 // Adapted from code from Scratch a Pixel
@@ -97,7 +135,7 @@ void TriangleMesh::generatePolySphere(float radius, int divisions)
     float dv = 2 * M_PI / divisions; 
  
     // Create the vertices
-    this->vertices.push_back(std::make_shared<Point3D>(0, -radius, -3)); 
+    this->vertices.push_back(Point3D(0, -radius, -3)); 
     for (int i = 0; i < divisions - 1; i++) 
     { 
         u += du; 
@@ -107,11 +145,11 @@ void TriangleMesh::generatePolySphere(float radius, int divisions)
             float x = radius * cos(u) * cos(v); 
             float y = radius * sin(u); 
             float z = radius * cos(u) * sin(v); 
-            this->vertices.push_back(std::make_shared<Point3D>(x, y, z - 3)); 
+            this->vertices.push_back(Point3D(x, y, z - 3)); 
             v += dv; 
         } 
     } 
-    this->vertices.push_back(std::make_shared<Point3D>(0, radius, -3)); 
+    this->vertices.push_back(Point3D(0, radius, -3)); 
  
     // Create the connectivity lists                                                                                                                                                                        
     int vid = 1, numV = 0; 
@@ -154,4 +192,17 @@ void TriangleMesh::generatePolySphere(float radius, int divisions)
         vid = numV; 
     } 
 
+}
+
+AABB TriangleMesh::boundingBox() const
+{
+    AABB bounds;
+
+    // Iterate over all triangles in the mesh and expand the bounding box
+    for (const Triangle& triangle : triangles) {
+        AABB triangleBounds = triangle.boundingBox();
+        bounds.expand(triangleBounds);
+    }
+
+    return bounds;    
 }

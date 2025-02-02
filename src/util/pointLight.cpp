@@ -4,23 +4,23 @@ PointLight::PointLight()
 {
 }
 
-PointLight::PointLight(std::shared_ptr<Point3D> location, std::shared_ptr<Color> color, real intensity)
+PointLight::PointLight(Point3D location, Color color, real intensity)
 	: Light(color, intensity)
 {
 	this->location = location;
 }
 
-std::shared_ptr<Point3D> PointLight::getLocation(void)
+Point3D PointLight::getLocation(void) const
 {
 	return(this->location);
 }
 
-void PointLight::setLocation(std::shared_ptr<Point3D> location)
+void PointLight::setLocation(Point3D location)
 {
 	this->location = location;
 }
 
-std::shared_ptr<Point3D> PointLight::getSamplePoint(void)
+Point3D PointLight::getSamplePoint(void) const
 {
 	return(this->location);
 }
@@ -28,13 +28,13 @@ std::shared_ptr<Point3D> PointLight::getSamplePoint(void)
 // The area for a point light source is 1 because the probability
 // of selecting a point within this light source is always 1
 // (we always select the same one)
-real PointLight::getArea(void)
+real PointLight::getArea(void) const
 {
 	return(1.0);
 }
 
 // How do we define the normal to a point light source?
-std::shared_ptr<Vector3D> PointLight::getNormal(void)
+Vector3D PointLight::getNormal(void) const
 {
-	return(std::make_shared<Vector3D>());
+	return(Vector3D());
 }

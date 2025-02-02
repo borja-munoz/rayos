@@ -11,17 +11,18 @@
 
 class Triangle : public Primitive
 {
-	std::shared_ptr<Point3D> vertex[3];
-	std::shared_ptr<Vector3D> normal;              // Plane containing
-	real distance;                 // the triangle
+	Point3D vertex[3];
+	Vector3D normal;              // Plane containing
+	real distance;                // the triangle
   
   public:
 	Triangle();
-	Triangle(std::shared_ptr<Point3D> x, 
-             std::shared_ptr<Point3D> y, 
-             std::shared_ptr<Point3D> z, 
-             std::shared_ptr<Material> mat);
-	real intersect(std::shared_ptr<Ray> r, Vector3D &normal);
+	Triangle(Point3D x, 
+             Point3D y, 
+             Point3D z, 
+             Material mat);
+	real intersect(const Ray& r, Vector3D &normal, real tMin, real tMax) const;
+	AABB boundingBox() const;
 };
 
 

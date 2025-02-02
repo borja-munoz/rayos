@@ -19,18 +19,42 @@ Point3D::Point3D(const Point3D &p)
   this->z = p.z;
 }
 
-std::shared_ptr<Point3D> Point3D::sum(std::shared_ptr<Vector3D> v)
+// Access operator for x, y, z by index
+real Point3D::operator[](size_t index) const 
 {
-  return(std::make_shared<Point3D>(this->x + v->x,
-                                   this->y + v->y,
-                                   this->z + v->z));
+  switch (index) 
+  {
+    case 0: return x;
+    case 1: return y;
+    case 2: return z;
+    default: throw std::out_of_range("Point3D index out of range");
+  }
 }
 
-std::shared_ptr<Vector3D> Point3D::substract(std::shared_ptr<Point3D> p)
+// Non-const access operator for x, y, z
+real& Point3D::operator[](size_t index) 
 {
-  return(std::make_shared<Vector3D>(this->x - p->x,
-                                    this->y - p->y,
-                                    this->z - p->z));
+  switch (index) 
+  {
+    case 0: return x;
+    case 1: return y;
+    case 2: return z;
+    default: throw std::out_of_range("Point3D index out of range");
+  }
+}
+
+Point3D Point3D::sum(const Vector3D& v) const
+{
+  return(Point3D(this->x + v.x,
+                 this->y + v.y,
+                 this->z + v.z));
+}
+
+Vector3D Point3D::substract(const Point3D& p) const
+{
+  return(Vector3D(this->x - p.x,
+                  this->y - p.y,
+                  this->z - p.z));
 }
 
 

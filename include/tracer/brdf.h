@@ -17,13 +17,13 @@ typedef enum
 } BRDFtype;
 
 // Prototypes
-Color PhongBRDF(std::shared_ptr<Material> m, 
+Color PhongBRDF(Material m, 
                 Vector3D N, 
-                std::shared_ptr<Vector3D> L, 
-                std::shared_ptr<Vector3D> V);
-Color BlinnBRDF(std::shared_ptr<Material> m, 
+                Vector3D L, 
+                Vector3D V);
+Color BlinnBRDF(Material m, 
                 Vector3D N, 
-                std::shared_ptr<Vector3D> L, 
-                std::shared_ptr<Vector3D> V);
+                Vector3D L, 
+                Vector3D V);
 
 #endif

@@ -3,7 +3,8 @@ project(rayos VERSION 0.1.0 LANGUAGES CXX)
 
 add_subdirectory(external/pbrt-parser EXCLUDE_FROM_ALL) 
 
-set(CMAKE_CXX_FLAGS "-std=c++17 -fsanitize=thread")
+set(CMAKE_CXX_FLAGS "-std=c++17")
+# set(CMAKE_CXX_FLAGS "-std=c++17 -fsanitize=thread")
 
 # For MacOS, OpenMP should be installed with homebrew
 # and the OpenMP_ROOT must be set to the location where
@@ -16,6 +17,9 @@ set(SOURCES
     src/rayos.cpp
     src/scene.cpp
 
+    src/geom/AABB.cpp
+    src/geom/BVH.cpp
+    src/geom/BVHNode.cpp
     src/geom/primitive.cpp
     src/geom/quad.cpp
     src/geom/sphere.cpp

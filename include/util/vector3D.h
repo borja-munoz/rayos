@@ -3,6 +3,8 @@
 
 #include "util.h"
 
+#include <algorithm> // For std::min and std::max
+
 #include <math.h>
 
 #include <memory>
@@ -53,20 +55,46 @@ class Vector3D
 
     }
 
-    inline real dotProduct(std::shared_ptr<Vector3D> v) const
-    {
-        return(this->x * v->x + this->y * v->y + this->z * v->z);
+    static Vector3D min(const Vector3D& a, const Vector3D& b) {
+        return { std::min(a.x, b.x), std::min(a.y, b.y), std::min(a.z, b.z) };
     }
 
-    inline std::shared_ptr<Vector3D> crossProduct(std::shared_ptr<Vector3D> v) const
+    static Vector3D max(const Vector3D& a, const Vector3D& b) {
+        return { std::max(a.x, b.x), std::max(a.y, b.y), std::max(a.z, b.z) };
+    }
+
+    // Access operator for x, y, z by index
+    real operator[](size_t index) const {
+        switch (index) {
+            case 0: return x;
+            case 1: return y;
+            case 2: return z;
+            default: throw std::out_of_range("Vector3D index out of range");
+        }
+    }
+
+    // Non-const access operator for x, y, z
+    real& operator[](size_t index) {
+        switch (index) {
+            case 0: return x;
+            case 1: return y;
+            case 2: return z;
+            default: throw std::out_of_range("Vector3D index out of range");
+        }
+    }
+
+    inline real dotProduct(const Vector3D& v) const
     {
-        std::shared_ptr<Vector3D> resultado = std::make_shared<Vector3D>();
-    
-        resultado->x = this->y * v->z - this->z * v->y;
-        resultado->y = this->z * v->x - this->x * v->z;
-        resultado->z = this->x * v->y - this->y * v->x;
-    
-        return(resultado);
+        return(this->x * v.x + this->y * v.y + this->z * v.z);
+    }
+
+    inline Vector3D crossProduct(const Vector3D& v) const
+    {
+        return Vector3D(
+            this->y * v.z - this->z * v.y,
+            this->z * v.x - this->x * v.z,
+            this->x * v.y - this->y * v.x
+        );
     }
 
     inline real length(void) const
@@ -85,25 +113,25 @@ class Vector3D
         this->z /= length;
     }
 
-    inline std::shared_ptr<Vector3D> sum(std::shared_ptr<Vector3D> v) const
+    inline Vector3D sum(const Vector3D& v) const
     {
-        return(std::make_shared<Vector3D>(this->x + v->x, 
-                                          this->y + v->y, 
-                                          this->z + v->z));
+        return(Vector3D(this->x + v.x, 
+                        this->y + v.y, 
+                        this->z + v.z));
     }
 
-    inline std::shared_ptr<Vector3D> substract(std::shared_ptr<Vector3D> v) const
+    inline Vector3D substract(const Vector3D& v) const
     {
-        return(std::make_shared<Vector3D>(this->x - v->x, 
-                                          this->y - v->y, 
-                                          this->z - v->z));
+        return(Vector3D(this->x - v.x, 
+                        this->y - v.y, 
+                        this->z - v.z));
     }
 
-    inline std::shared_ptr<Vector3D> product(real d) const
+    inline Vector3D product(real d) const
     {
-        return(std::make_shared<Vector3D>(this->x * d,
-                                          this->y * d,
-                                          this->z * d));
+        return(Vector3D(this->x * d,
+                        this->y * d,
+                        this->z * d));
     }
 
 };

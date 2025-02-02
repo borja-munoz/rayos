@@ -8,7 +8,7 @@
 
 class Material
 {
-    std::shared_ptr<Color> color;            
+    Color color;            
     real ka;   // Ambient
     real kd;   // Diffuse
     real ks;   // Specular
@@ -17,12 +17,12 @@ class Material
   public:
  
     Material();
-    std::shared_ptr<Color> getColor(void);
+    Color getColor(void);
     real getKa(void);
     real getKd(void);
     real getKs(void);
     real getKe(void);
-    void set(std::shared_ptr<Color> color, real ka, real kd, real ks, real ke);
+    void set(Color color, real ka, real kd, real ks, real ke);
 };
 
 
