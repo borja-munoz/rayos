@@ -90,18 +90,62 @@ There is a `getEyeRay` method for getting an eye ray for non-stochastic algorith
 - [x] Fix mutuallyVisible method on the Scene class
 - [x] Optimize the code by using stack objects instead of heap objects where appropriate
 - [x] Profile the code using Valgrind https://web.stanford.edu/class/archive/cs/cs107/cs107.1194/resources/callgrind
-- [ ] Implement the TriangleMesh primitive, including intersection with rays [scratchapixel](https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-polygon-mesh)
-- [ ] Improve performance using a space partitioning technique like Bounding Volume Hierarchies
+- [x] Implement the TriangleMesh primitive, including intersection with rays [scratchapixel](https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-polygon-mesh)
+- [x] Parallelize the code with OpenMP
+- [x] Improve triangle mesh intersection avoid the creation of triangles in every intersection. 
+- [x] Improve triangle intersection using the Moller-Trumbore algorithm
+- [x] Improve performance using a space partitioning technique like Bounding Volume Hierarchies (tinybvh from Jacco Bikker)
+- [ ] Read the scene data from PBRT format using https:/github.com/ingowald/pbrt-parser
+- [ ] Improve performance using importance sampling or stratified sampling to reduce the number of sample rays traced
 - [ ] Use [Assimp](http://assimp.org/) for reading 3D model file formats
 - [ ] Test using more complex models
 - [ ] Implement Jensen's Photon Mapping
-- [ ] Read the scene data from PBRT format using https:/github.com/ingowald/pbrt-parser
-- [ ] Read the scene data from glTF format using https://github.com/syoyo/tinygltf 
-- [ ] Implement Blinn BRDF
+- [ ] Implement additional BRDF (Blinn, Microfacet...)
 
-## Smart Pointers vs Stack Objects
+## Performance
 
-Using mostly stack objects we observe this behaviour:
+### Parallelization
 
-- For output images up to 300x300, the generation is quite fast (< 1 sec)
-- For output images from 400x400, there is a big slowdown (> 5 sec) and, when profiling, we find there are lots of calls to tiny_free_detach_region and tiny_free_reattach_region. It seems we are hitting some stack limit and then there is lot of memory movement that slowdowns everything.
+Being able to use all the cores in the computer has a big impact (not linear but close). I'm dividing the image in small tiles so we can take advantage of locality and there's not so much thread synchronization when compared to parallelize at the pixel level. 
+
+Tiles shouldn't be big because we don't want threads to spend too much time in each unit of work. I've tested with 16x16 and 32x32 tiles and the performance was better with the smaller tilesize.
+
+### Precomputation
+
+When possible we should precompute things. Generating the image for the scene with the polysphere (5 divisions) took 40 seconds (M3) without precomputation and 18 seconds when precomputing the triangles.
+
+### Smart pointers vs objects
+
+Working with smart pointers make the code less readable and also introduces overhead when needing to allocate memory and dereference variables. When possible we should just use objects because performance will be better.
+
+We need to be careful when using stack objects because, if they are large, you can hit the stack limit. When profiling, we can find there are lots of calls to tiny_free_detach_region and tiny_free_reattach_region (memory movement) that slowdowns everything.
+
+So we should keep the stack objects for small objects.
+
+### Structs vs objects
+
+When implementing the intersection for the triangle mesh I started with a simple struct with float arrays for the vertices and normal. Moving this code to the Triangle object adds a 15% overhead on execution time. It's significant and can have a big impact when rendering complex scenes. 
+
+I'm not sure how the memory is allocated for objects within a vector but objects should be contiguous. It is true that memory layout with a vector of structs is probably more efficient.
+
+### Float vs double
+
+I have a typedef with a type called `real` to switch easily between single and double precision floating point. Using single precision (float) does not reduce the image generation time and adds some artifacts to the image.
+
+### Sampling
+
+Adapting the number of samples depending on the area of the image should be also an important aspect for improving performance. We could reduce the number of sample rays per pixel for those areas where there are not big variations in color and we could also adapt the number of shadow rays we trace. 
+
+We need to investigate importance and stratified sampling.
+
+### Bounding volume hierarchies
+
+Adding some kind of hierarchy to the scene to avoid comparing each ray with each of the scene objects is key to be able to reduce the image generation time when working with complex scenes.
+
+I've implemented a very simple bounding box (AABB) hierarchy that split the objects using the longest axis of the bounding box. I had around 25% improvement in execution time but it should be much higher with more complex scenes.
+
+Further improvements can be obtained with different measures:
+- Using a better heuristic for splitting the objects
+- Reducing the BVHNode size so it is aligned with cache line sizes
+
+### Ray Coherence
