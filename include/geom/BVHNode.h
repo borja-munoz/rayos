@@ -1,6 +1,9 @@
 #ifndef _BVHNODE_H
 #define _BVHNODE_H
 
+#include <memory>
+#include <vector>
+
 #include "AABB.h"
 #include "primitive.h"
 

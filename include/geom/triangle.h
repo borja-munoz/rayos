@@ -1,6 +1,8 @@
 #ifndef _TRIANGLE_H
 #define _TRIANGLE_H
 
+#include <cmath>
+
 #include "primitive.h"
 #include "../util/point3D.h"
 #include "../util/ray.h"
