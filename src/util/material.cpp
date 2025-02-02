@@ -1,20 +1,8 @@
 #include "material.h"
 
-
-//-----------------------------------------------
-
-Material::Material()
-{
-    this->color = Color(1.0, 1.0, 1.0);
-	this->ka = 1.0;
-	this->kd = 0.5; 
-	this->ks = 0.5;
-    this->ke = 0.0;
-}
-
 Color Material::getColor(void)
 {
-    return(color);
+    return(kdColor);
 }
 
 real Material::getKa(void)
@@ -39,7 +27,7 @@ real Material::getKe(void)
 
 void Material::set(Color color, real ka, real kd, real ks, real ke)
 {
-    this->color = color;
+    this->kdColor = color;
   
     this->ka = ka;
     this->kd = kd;

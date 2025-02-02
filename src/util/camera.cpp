@@ -14,6 +14,22 @@ Camera::Camera()
 	this->initialize();
 }
 
+Camera::Camera(Point3D location, 
+               Point3D view, 
+               Vector3D up)
+{
+	this->location = location;
+	this->view = view;
+	this->up = up;
+	this->distance = 1;
+	this->hFov = 60;
+	this->vFov = 60;
+	this->xRes = 640;
+	this->yRes = 640;
+
+	this->initialize();	
+}
+
 
 Camera::Camera(Point3D location, 
                Point3D view, 
@@ -64,6 +80,13 @@ void Camera::getResolution(unsigned int &xRes, unsigned int &yRes)
 {
 	xRes = this->xRes;
 	yRes = this->yRes;
+}
+
+void Camera::setFOV(real fov)
+{
+	this->hFov = fov;
+	this->vFov = fov;
+	this->initialize();
 }
 
 Ray Camera::getEyeRay(real x, real y)

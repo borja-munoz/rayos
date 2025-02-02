@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10...3.25)
 project(rayos VERSION 0.1.0 LANGUAGES CXX)
 
-add_subdirectory(external/pbrt-parser EXCLUDE_FROM_ALL) 
+# add_subdirectory(external/pbrt-parser EXCLUDE_FROM_ALL) 
 
 set(CMAKE_CXX_FLAGS "-std=c++17")
 # set(CMAKE_CXX_FLAGS "-std=c++17 -fsanitize=thread")
@@ -37,6 +37,7 @@ set(SOURCES
     src/util/light.cpp
     src/util/material.cpp
     src/util/mt19937ar.cpp
+    src/util/pbrtParser.cpp
     src/util/point3D.cpp
     src/util/pointLight.cpp
     src/util/rand.cpp
@@ -94,10 +95,10 @@ target_include_directories(rayos PRIVATE
   include/tracer
   include/util
 )
-target_include_directories(rayos PRIVATE ${CMAKE_PROJECT_SOURCE_DIR}/external/pbrt-parser)
+# target_include_directories(rayos PRIVATE ${CMAKE_PROJECT_SOURCE_DIR}/external/pbrt-parser)
 
 target_include_directories(rayos PRIVATE /opt/homebrew/opt/libomp/include)
 
-target_link_libraries(rayos PRIVATE pbrtParser)
+# target_link_libraries(rayos PRIVATE pbrtParser)
 
 target_link_libraries(rayos PRIVATE OpenMP::OpenMP_CXX)

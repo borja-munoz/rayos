@@ -1,84 +1,12 @@
 #include "scene.h"
-
-// Traverse the PBRT scene recursively
-// void Scene::traversePBRT(std::shared_ptr<pbrt::Object> object)
-// {
-//   const bool firstTime = (alreadyTraversed.find(object) == alreadyTraversed.end());
-//   alreadyTraversed.insert(object);
-
-//   // numObjects.add(firstTime,1);
-//   // numLights.add(firstTime,object->lightSources.size());
-
-//   for (auto light : object->lightSources)
-//   {
-//     if (light->as<pbrt::PointLightSource>())
-//     {
-//       this->light.push_back(std::make_shared<PointLight>());
-//       // numPointLights.add(firstTime,1);
-//     }
-//     if (light->as<pbrt::SpotLightSource>())
-//     {
-//       // numSpotLights.add(firstTime,1);
-//     }
-//     if (light->as<pbrt::InfiniteLightSource>())
-//     {
-//       // numInfiniteLights.add(firstTime,1);
-//     }
-//     if (light->as<pbrt::DistantLightSource>())
-//     {
-//       // numDistantLights.add(firstTime,1);
-//     }
-//   }
-
-//   // numShapes.add(firstTime,object->shapes.size());
-
-//   for (auto shape : object->shapes)
-//   {
-//     usedMaterials.insert(shape->material);
-//     if (shape->areaLight)
-//     {
-//       // numAreaLights.add(firstTime,1);
-//       this->light.push_back(std::make_shared<RectLight>());
-//     }
-//     if (std::shared_ptr<pbrt::TriangleMesh> mesh = std::dynamic_pointer_cast<pbrt::TriangleMesh>(shape))
-//     {
-//       this->object.push_back(std::make_shared<TriangleMesh>());
-//       // numTriangles.add(firstTime,mesh->index.size());
-//     }
-//     else if (std::shared_ptr<pbrt::QuadMesh> mesh = std::dynamic_pointer_cast<pbrt::QuadMesh>(shape))
-//     {
-//       // numQuads.add(firstTime,mesh->index.size());
-//     }
-//     else if (std::shared_ptr<pbrt::Sphere> sphere = std::dynamic_pointer_cast<pbrt::Sphere>(shape))
-//     {
-//       this->object.push_back(std::make_shared<Sphere>());
-//       // numSpheres.add(firstTime,1);
-//     }
-//     else if (std::shared_ptr<pbrt::Disk> disk = std::dynamic_pointer_cast<pbrt::Disk>(shape))
-//     {
-//       // numDisks.add(firstTime,1);
-//     }
-//     else if (std::shared_ptr<pbrt::Curve> curves = std::dynamic_pointer_cast<pbrt::Curve>(shape))
-//     {
-//       // numCurves.add(firstTime,1);
-//     }
-//     else
-//       std::cout << "un-handled geometry type : " << shape->toString() << std::endl;
-//   }
-
-//   // numInstances.add(firstTime,object->instances.size());
-//   for (auto inst : object->instances)
-//   {
-//     this->traversePBRT(inst->object);
-//   }
-// }
+#include "pbrtParser.h"
 
 // Default scene (Cornell Box)
 Scene::Scene()
 {
   this->createCornellBox();
 
-  this->object.push_back(std::make_shared<TriangleMesh>());
+  this->objects.push_back(std::make_shared<TriangleMesh>());
 }
 
 void Scene::createCornellBox()
@@ -108,17 +36,17 @@ void Scene::createCornellBox()
   // Light source
   std::shared_ptr<RectLight> lightTecho = std::make_shared<RectLight>();
   lightTecho->setLocation(*lightObject);
-  this->light.push_back(lightTecho);
+  this->lights.push_back(lightTecho);
 
   // Objects (including lights)
-  this->object.push_back(lightObject);
+  this->objects.push_back(lightObject);
 
   // Cornell Box
-  this->object.push_back(this->cbLeftWall());
-  this->object.push_back(this->cbRightWall());
-  this->object.push_back(this->cbBackWall());
-  this->object.push_back(this->cbCeiling());
-  this->object.push_back(this->cbFloor());
+  this->objects.push_back(this->cbLeftWall());
+  this->objects.push_back(this->cbRightWall());
+  this->objects.push_back(this->cbBackWall());
+  this->objects.push_back(this->cbCeiling());
+  this->objects.push_back(this->cbFloor());
 
   // Short box
   // std::vector<std::shared_ptr<Quad>> shortBox = this->cbShortBox();
@@ -321,55 +249,114 @@ std::vector<std::shared_ptr<Quad>> Scene::cbTallBox()
 // https://github.com/ingowald/pbrt-parser
 Scene::Scene(const std::string filename)
 {
-  // std::shared_ptr<pbrt::Scene> scene;
+    PBRTParser parser(filename);
+    std::shared_ptr<Scene> parsedScene = parser.parse();
 
-  // scene = pbrt::importPBRT(filename);
+    if (!parsedScene) {
+        std::cerr << "Error parsing scene file: " << filename << std::endl;
+        return;
+    }
 
-  // scene->makeSingleLevel();
+    // Copy lights
+    for (const auto& light : parsedScene->lights) {
+        lights.push_back(light);
+    }
 
-  // this->traversePBRT(scene->world);
+    // Copy primitives
+    for (const auto& object : parsedScene->objects) {
+        objects.push_back(object);
+    }
 
-  cout << "This scene has " << this->light.size() << " lights\n";
-  cout << "This scene has " << this->object.size() << " objects\n";
-  /*
-  Scene::SP scene = SemanticParser(pbrt).result;
-  createFilm(scene,pbrt);
-  for (auto cam : pbrt->cameras)
-    scene->cameras.push_back(createCamera(cam));
-  //return scene;
-  */
-
-  // Camera
-  this->camera = Camera();
+    // Copy camera
+    camera = parsedScene->camera;
 }
+
+void Scene::addLight(const std::shared_ptr<Light>& light) {
+    this->lights.push_back(light);
+}
+
+void Scene::addObject(const std::shared_ptr<Primitive>& object) {
+    this->objects.push_back(object);
+}
+
+void Scene::setCamera(const Camera& cam) {
+    camera = cam;
+}
+
+// void Scene::traversePBRT(pbrt::Object::SP object)
+// {
+//   const bool firstTime = (alreadyTraversed.find(object) == alreadyTraversed.end());
+//   alreadyTraversed.insert(object);
+
+//   numObjects.add(firstTime,1);
+//   numLights.add(firstTime,object->lightSources.size());
+
+//   for (auto light : object->lightSources) {
+//     if (light->as<PointLightSource>())
+//       numPointLights.add(firstTime,1);
+//     if (light->as<SpotLightSource>())
+//       numSpotLights.add(firstTime,1);
+//     if (light->as<InfiniteLightSource>())
+//       numInfiniteLights.add(firstTime,1);
+//     if (light->as<DistantLightSource>())
+//       numDistantLights.add(firstTime,1);
+//   }
+  
+//   numShapes.add(firstTime,object->shapes.size());
+  
+//   for (auto shape : object->shapes) {
+//     usedMaterials.insert(shape->material);
+//     if (shape->areaLight) {
+//       numAreaLights.add(firstTime,1);
+//     }
+//     if (TriangleMesh::SP mesh=std::dynamic_pointer_cast<TriangleMesh>(shape)){
+//       numTriangles.add(firstTime,mesh->index.size());
+//     } else if (QuadMesh::SP mesh=std::dynamic_pointer_cast<QuadMesh>(shape)){
+//       numQuads.add(firstTime,mesh->index.size());
+//     } else if (Sphere::SP sphere=std::dynamic_pointer_cast<Sphere>(shape)){
+//       numSpheres.add(firstTime,1);
+//     } else if (Disk::SP disk=std::dynamic_pointer_cast<Disk>(shape)){
+//       numDisks.add(firstTime,1);
+//     } else if (Curve::SP curves=std::dynamic_pointer_cast<Curve>(shape)){
+//       numCurves.add(firstTime,1);
+//     } else
+//       std::cout << "un-handled geometry type : " << shape->toString() << std::endl;
+//   }
+
+//   numInstances.add(firstTime,object->instances.size());
+//   for (auto inst : object->instances) {
+//     traverse(inst->object);
+//   }
+// }
+
 
 unsigned int Scene::getNumberObjects(void)
 {
-  return (this->object.size());
+  return (this->objects.size());
 }
 
 std::shared_ptr<Primitive> Scene::getObject(unsigned int objectIndex)
 {
-  if ((objectIndex >= 0) && (objectIndex < this->object.size()))
-    return (this->object[objectIndex]);
+  if ((objectIndex >= 0) && (objectIndex < this->objects.size()))
+    return (this->objects[objectIndex]);
 
   return (0);
 }
 
 unsigned int Scene::getNumberLights(void)
 {
-  return (this->light.size());
+  return (this->lights.size());
 }
 
 std::shared_ptr<Light> Scene::getLight(unsigned int lightIndex)
 {
-  if ((lightIndex >= 0) && (lightIndex < this->object.size()))
-    return (this->light[lightIndex]);
+  if ((lightIndex >= 0) && (lightIndex < this->objects.size()))
+    return (this->lights[lightIndex]);
 
   return (0);
 }
 
-Camera Scene::getCamera(void)
+Camera Scene::getCamera(void) const
 {
   return (this->camera);
 }
@@ -393,14 +380,14 @@ bool Scene::mutuallyVisible(Point3D p, Point3D q)
   // and pointing towards the second point
   r = Ray(p, lineOfSight);
 
-  numberObjects = this->object.size();
+  numberObjects = this->objects.size();
 
   // Intersection with the different objects
   // We start at 1 to avoid light intersection
   // We must change it in the future
   for (unsigned int i = 1; i < numberObjects; i++)
   {
-    object = this->object[i];
+    object = this->objects[i];
     intersection = object->intersect(r, N, 0.001, distance);
 
     // If the hitpoint distance is smaller than the distance
@@ -423,7 +410,7 @@ bool Scene::mutuallyVisible(Point3D p, Point3D q)
 
 void Scene::buildBVH() 
 {
-    this->bvh.build(this->object);
+    this->bvh.build(this->objects);
 }
 
 std::optional<HitPoint> Scene::intersect(const Ray& ray, real tMin, real tMax) const 
