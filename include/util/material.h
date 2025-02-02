@@ -8,7 +8,7 @@
 
 class Material
 {
-    Color color;            
+    Color kdColor;  // Diffuse color (can be RGB or spectrum)
     real ka;   // Ambient
     real kd;   // Diffuse
     real ks;   // Specular
@@ -16,7 +16,9 @@ class Material
   
   public:
  
-    Material();
+    Material() : kdColor(Color(1.0, 1.0, 1.0)), ka(1.0f), kd(0.5f), ks(0.5f), ke(0.0f) {}
+    Material(const Color& color, real ka, real kd, real ks, real ke)
+        : kdColor(color), ka(ka), kd(kd), ks(ks), ke(ke) {} 
     Color getColor(void);
     real getKa(void);
     real getKd(void);

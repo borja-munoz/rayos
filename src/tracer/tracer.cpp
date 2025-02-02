@@ -76,9 +76,9 @@ std::optional<HitPoint> Tracer::getHitPoint(const Ray& r,
 
     std::optional<HitPoint> result;
 
-    real tMin = 0.001f;   // Minimum distance to avoid self-intersections
-    real tMax = FLT_MAX;  // Maximum allowable distance
-    real closestT = tMax; // Track the closest intersection distance
+    real tMin = 0.001f;       // Minimum distance to avoid self-intersections
+    real tMax = __FLT_MAX__;  // Maximum allowable distance
+    real closestT = tMax;     // Track the closest intersection distance
 
 	// Intersection using the BVH structure
 	result = s->intersect(r, tMin, closestT);

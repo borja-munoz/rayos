@@ -31,6 +31,9 @@ class Camera
   public:
  
 	Camera();
+	Camera(Point3D location,
+		   Point3D view,
+		   Vector3D up);
 	Camera(Point3D location, 
            Point3D view, 
            Vector3D up, 
@@ -41,6 +44,7 @@ class Camera
            unsigned int yRes);
 	Point3D getLocation(void);
 	void getResolution(unsigned int &xRes, unsigned int &yRes);
+	void setFOV(real fov);
 	Ray getEyeRay(real x, real y);
 	vector<Ray> getSampleEyeRays(real x, real y, unsigned int sampleRays);
 
