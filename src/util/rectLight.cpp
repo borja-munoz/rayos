@@ -4,18 +4,18 @@ RectLight::RectLight()
 {
 }
 
-RectLight::RectLight(Quad location, Color color, real intensity)
+RectLight::RectLight(std::shared_ptr<Primitive> location, Color color, real intensity)
 	: Light(color, intensity)
 {	
 	this->location = location;
 }
 
-Quad RectLight::getLocation(void)
+std::shared_ptr<Primitive> RectLight::getLocation(void)
 {
 	return(this->location);
 }
 
-void RectLight::setLocation(Quad q)
+void RectLight::setLocation(std::shared_ptr<Primitive> q)
 {
 	this->location = q;
 }
@@ -25,7 +25,7 @@ Point3D RectLight::getSamplePoint(void) const
 	Point3D samplePoint, p;
 	real xi, eta;
 	Vector3D aux1, aux2, aux3;
-	vector<Point3D> coordinates;
+	std::vector<Point3D> coordinates;
 
     // To generate a random point within a quad,
     // we have used information from this URL:
@@ -39,7 +39,8 @@ Point3D RectLight::getSamplePoint(void) const
 
 	// samplePoint = {(1-xi)(1-eta)A + (1+xi)(1-eta)B + (1+xi)(1+eta)C + (1-xi)((1+eta)D} / 4
 
-	coordinates = this->location.getCoordinates();
+  std::shared_ptr<Quad> quadLight = std::dynamic_pointer_cast<Quad>(this->location);
+	coordinates = quadLight->getCoordinates();
 
 	p = coordinates[0];
 	aux1 = Vector3D(p.x, p.y, p.z);
@@ -67,12 +68,14 @@ Point3D RectLight::getSamplePoint(void) const
 
 real RectLight::getArea(void) const
 {
-	return this->location.getArea();
+  std::shared_ptr<Quad> quadLight = std::dynamic_pointer_cast<Quad>(this->location);
+	return quadLight->getArea();
 }
 
 Vector3D RectLight::getNormal(void) const
 {
-	return this->location.getNormal();
+  std::shared_ptr<Quad> quadLight = std::dynamic_pointer_cast<Quad>(this->location);
+	return quadLight->getNormal();
 }
 
 

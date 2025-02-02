@@ -85,19 +85,13 @@ std::shared_ptr<Scene> PBRTParser::parse()
             } 
             else if (keyword == "AreaLightSource") 
             {
-                currentLight = parseAreaLight(iss);
-                if (currentLight) 
-                {
-                    scene->addLight(currentLight);
-                }
+                currentLight = parseAreaLight(file, iss);
+                scene->addLight(currentLight);
             } 
             else if (keyword == "PointLightSource") 
             {
                 currentLight = parsePointLight(iss);
-                if (currentLight) 
-                {
-                    scene->addLight(currentLight);
-                }
+                scene->addLight(currentLight);
             }
         }
     }
@@ -146,11 +140,11 @@ std::optional<real> PBRTParser::parseCamera(std::istringstream& stream)
 
         // Parse parameters
         while (stream >> paramKey) {
-            if (paramKey == "\"float\"") {
+            if (paramKey == "\"float") {
                 std::string paramName;
                 stream >> paramName;
 
-                if (paramName == "fov") {
+                if (paramName == "fov\"") {
                     char bracket;
                     stream >> bracket;  // Should be '['
                     if (bracket != '[') {
@@ -183,17 +177,66 @@ std::shared_ptr<PointLight> PBRTParser::parsePointLight(std::istringstream& stre
     return light;
 }
 
-std::shared_ptr<RectLight> PBRTParser::parseAreaLight(std::istringstream& stream) 
+std::shared_ptr<RectLight> PBRTParser::parseAreaLight(
+  std::ifstream& file,
+  std::istringstream& stream) 
 {
-    float r, g, b, x, y, z, w, h;
-    stream >> r >> g >> b >> x >> y >> z >> w >> h;
+    Material material;
+    std::shared_ptr<Primitive> shape;
+    Color lightColor;
+    std::string line;
+    std::string keyword;
 
-    std::shared_ptr<RectLight> light;
-    // light.position = Point3D(x, y, z);
-    // light.intensity = Vector3D(r, g, b);
-    // light.size = Vector3D(w, h, 0.0f);
+    // The current position of the string is right after the AreaLightSource token
+    std::string lightType;
+    std::string spectrumKey;
+    stream >> lightType >> spectrumKey;
 
-    return light;
+    if (spectrumKey == "\"spectrum\"") 
+    {
+        char bracket;
+        stream >> bracket;
+
+        std::vector<float> spectrumData;
+        float value;
+        while (stream >> value) spectrumData.push_back(value);
+
+        if (!spectrumData.empty() && spectrumData.back() == ']') {
+            spectrumData.pop_back();
+        }
+
+        std::map<float, float> spectrum;
+        for (size_t i = 0; i < spectrumData.size(); i += 2) {
+            float wavelength = spectrumData[i];
+            float intensity = spectrumData[i + 1];
+            spectrum[wavelength] = intensity;
+        }
+
+        lightColor = Color(spectrum);
+    }
+
+    // Then we keep reading lines to read the material and
+    // the shape for the light source until we find the AttributeEnd token
+    while (std::getline(file, line)) 
+    {
+        std::istringstream newLineStream(line);
+        newLineStream >> keyword;
+
+        if (keyword == "Material") 
+        {
+            material = parseMaterial(newLineStream);
+        } 
+        else if (keyword == "Shape") 
+        {
+            shape = parseShape(newLineStream, material);
+        } 
+        else if (keyword == "AttributeEnd") 
+        {
+            break;
+        }
+    }
+
+    return std::make_shared<RectLight>(shape, lightColor, 1.0);
 }
 
 std::shared_ptr<Primitive> PBRTParser::parseShape(

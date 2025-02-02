@@ -1,23 +1,25 @@
 #ifndef _RECT_LIGHT_H
 #define _RECT_LIGHT_H
 
+#include "../geom/primitive.h"
 #include "../geom/quad.h"
 #include "point3D.h"
 #include "util.h"
 #include "light.h"
 
 #include <memory>
+#include <vector>
 
 class RectLight : public Light
 {
-	Quad location;
+	std::shared_ptr<Primitive> location;
 
   public:
  
 	RectLight();
-	RectLight(Quad location, Color color, real intensity);
-	Quad getLocation(void);
-	void setLocation(Quad c);
+	RectLight(std::shared_ptr<Primitive> location, Color color, real intensity);
+	std::shared_ptr<Primitive> getLocation(void);
+	void setLocation(std::shared_ptr<Primitive> c);
 	Point3D getSamplePoint(void) const;
 	real getArea(void) const;
 	Vector3D getNormal(void) const;

@@ -35,7 +35,7 @@ void Scene::createCornellBox()
 
   // Light source
   std::shared_ptr<RectLight> lightTecho = std::make_shared<RectLight>();
-  lightTecho->setLocation(*lightObject);
+  lightTecho->setLocation(lightObject);
   this->lights.push_back(lightTecho);
 
   // Objects (including lights)
@@ -244,9 +244,7 @@ std::vector<std::shared_ptr<Quad>> Scene::cbTallBox()
   return (box);
 }
 
-// Read scene information from a file
-// Currently only PBRT files are supported through the pbrt-parser library
-// https://github.com/ingowald/pbrt-parser
+// Read scene information from a PBRT scene file
 Scene::Scene(const std::string filename)
 {
     PBRTParser parser(filename);
