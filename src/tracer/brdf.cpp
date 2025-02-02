@@ -7,24 +7,24 @@ Color PhongBRDF(Material mat,
                 Vector3D V)
 {
     Vector3D R, aux;
-	real ka, kd, ks;
-	Color colorLight;
+	  real ka, kd, ks;
+	  Color colorLight;
     Color colorMat;
     real intensityLight;
-	double NL, RV;
-	Color radiance;
+	  double NL, RV;
+	  Color radiance;
 
-	// Ambient, diffuse and specular components
-	ka = mat.getKa();
-	kd = mat.getKd();
-	ks = mat.getKs();
+    // Ambient, diffuse and specular components
+    ka = mat.getKa();
+    kd = mat.getKd();
+    ks = mat.getKs();
 
-	colorMat = mat.getColor();
+    colorMat = mat.getColor();
 
-	colorLight = Color(1.0, 1.0, 1.0);
-	intensityLight = 1.0f;   
+    colorLight = Color(1.0, 1.0, 1.0);
+    intensityLight = 1.0f;   
 
-	// Vector for diffuse component
+	  // Vector for diffuse component
     NL = N.dotProduct(L);
     
     // Vectors for specular component
@@ -47,7 +47,7 @@ Color PhongBRDF(Material mat,
     */
     radiance = colorLight * intensityLight * colorMat * (kd * NL + ks * RV);
 
-	return(radiance);
+	  return(radiance);
 }
 
 // Jim Blinn BRDF                                         
@@ -56,11 +56,11 @@ Color BlinnBRDF(Material mat,
                 Vector3D L, 
                 Vector3D V)
 {
-	Color radiance;
+    Color radiance;
 
-	// Not finished, only to avoid warnings
-	//radiance[0] = N.dotProduct(L) + L->dotProduct(V) + mat->getKa();
-    radiance = Color();
+    // Not finished, only to avoid warnings
+    //radiance[0] = N.dotProduct(L) + L->dotProduct(V) + mat->getKa();
+      radiance = Color();
 
-	return(radiance);
+    return(radiance);
 }
