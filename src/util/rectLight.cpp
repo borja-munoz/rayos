@@ -49,8 +49,11 @@ Vector3D RectLight::getNormal(void) const
 	}
 	else if (std::dynamic_pointer_cast<TriangleMesh>(this->location))
 	{
-		// ToDo
-		return(Vector3D(0, 0, 0));
+		// If the light shape is a triangle mesh,
+		// we return the normal of the first triangle
+		std::shared_ptr<TriangleMesh> mesh = 
+			std::dynamic_pointer_cast<TriangleMesh>(this->location);
+		return mesh->getTriangle(0).getNormal();
 	}
 	else
 	{
