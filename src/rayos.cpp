@@ -65,7 +65,6 @@ int main(int argc, char *argv[])
   else
   {
     s = std::make_shared<Scene>(argv[4]);
-    return (0);
   }
 
   // Raytrace the scene to create an image
