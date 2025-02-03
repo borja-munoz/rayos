@@ -1,4 +1,4 @@
-#include "stochasticRayTracer.h"
+#include "tracer/stochasticRayTracer.h"
 #include "util/chrono.h"
 
 #include <sstream>
