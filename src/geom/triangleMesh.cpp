@@ -79,6 +79,34 @@ TriangleMesh::TriangleMesh(std::vector<Point3D> vertices,
     }
 }
 
+// Returns a random point from a random triangle in the mesh
+Point3D TriangleMesh::getSamplePoint()
+{
+    // Select a random triangle
+    int triangleIndex = getRandomNumberMT(0, this->triangles.size() - 1);
+    const Triangle& triangle = triangles[triangleIndex];
+
+    // Get the vertices of the selected triangle
+    const Point3D& A = triangle.getVertex(0);
+    const Point3D& B = triangle.getVertex(1);
+    const Point3D& C = triangle.getVertex(2);
+
+    // Generate random barycentric coordinates
+    float u = getRandomNumberMT(0.0f, 1.0f);
+    float v = getRandomNumberMT(0.0f, 1.0f);
+
+    // Ensure the point is inside the triangle
+    if (u + v > 1.0f) {
+        u = 1.0f - u;
+        v = 1.0f - v;
+    }
+
+    // Compute the sample point using barycentric coordinates
+    Point3D samplePoint = A * (1.0f - u - v) + B * u + C * v;
+
+    return samplePoint;
+}
+
 // Intersects the triangle mesh with a ray
 // If there is a hit, returns:
 // - Hit point (parametric parameter on the ray)
