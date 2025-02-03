@@ -107,6 +107,11 @@ Point3D TriangleMesh::getSamplePoint()
     return samplePoint;
 }
 
+Triangle TriangleMesh::getTriangle(int index)
+{
+    return this->triangles[index];
+}
+
 // Intersects the triangle mesh with a ray
 // If there is a hit, returns:
 // - Hit point (parametric parameter on the ray)

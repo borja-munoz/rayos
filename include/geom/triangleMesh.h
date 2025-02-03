@@ -38,6 +38,7 @@ class TriangleMesh : public Primitive
   int getNumberTriangles();
   int getNumberVertices();
   Point3D getSamplePoint();
+  Triangle getTriangle(int index);
 	AABB boundingBox() const;
   
   private:
