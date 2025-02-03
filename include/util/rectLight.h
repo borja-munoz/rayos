@@ -3,6 +3,7 @@
 
 #include "../geom/primitive.h"
 #include "../geom/quad.h"
+#include "../geom/triangleMesh.h"
 #include "point3D.h"
 #include "util.h"
 #include "light.h"
