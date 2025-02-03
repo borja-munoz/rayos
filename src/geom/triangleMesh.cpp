@@ -62,6 +62,21 @@ TriangleMesh::TriangleMesh(std::vector<Point3D> vertices,
     this->material = mat;
     
     this->type = TRIANGLE_MESH;
+
+    int j = 0;
+    for (int i = 0; i < this->numberTriangles; i++)
+    {
+        this->triangles.push_back(
+            Triangle(
+                this->vertices[this->vertexIndexes[j]],
+                this->vertices[this->vertexIndexes[j+1]],
+                this->vertices[this->vertexIndexes[j+2]],
+                this->material
+            )
+        );
+
+        j += 3;
+    }
 }
 
 // Intersects the triangle mesh with a ray
