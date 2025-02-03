@@ -223,6 +223,7 @@ std::shared_ptr<RectLight> PBRTParser::parseAreaLight(
         if (line != "") 
         {
             std::istringstream newLineStream(line);
+            keyword = "";
             newLineStream >> keyword;
             if (keyword == "Material") 
             {
@@ -367,9 +368,10 @@ Material PBRTParser::parseMatteMaterial(std::ifstream& file)
         std::istringstream lineStream(line);
         std::string token;
 
-        while (lineStream >> token)
+        if (!readingSpectrum)
         {
             // Look for spectrum Kd definition
+            lineStream >> token;
             if (token == "\"spectrum")
             {
                 lineStream >> token;
@@ -388,37 +390,37 @@ Material PBRTParser::parseMatteMaterial(std::ifstream& file)
                     }
                 }
             }
+        }
 
-            if (readingSpectrum)
+        // Check if we have a pending spectrum wavelenght
+        float value;
+        if (pendingWavelength > 0) 
+        {
+            std::istringstream iss(token);
+            iss >> value;
+            spectrumData[pendingWavelength] = value;
+            pendingWavelength = -1.0f;
+        }
+
+        // Read remaining spectrum values
+        while (lineStream >> value)
+        {
+            if (pendingWavelength < 0)  // Expecting wavelength
             {
-                float value;
-                if (pendingWavelength) 
-                {
-                    std::istringstream iss(token);
-                    iss >> value;
-                    spectrumData[pendingWavelength] = value;
-                    pendingWavelength = -1.0f;
-                }
-                while (lineStream >> value)
-                {
-                    if (pendingWavelength < 0)  // Expecting wavelength
-                    {
-                        pendingWavelength = value;
-                    }
-                    else  // Expecting intensity
-                    {
-                        spectrumData[pendingWavelength] = value;
-                        pendingWavelength = -1.0f;  // Reset for next pair
-                    }
+                pendingWavelength = value;
+            }
+            else  // Expecting intensity
+            {
+                spectrumData[pendingWavelength] = value;
+                pendingWavelength = -1.0f;  // Reset for next pair
+            }
 
-                    // Break if we find the closing bracket
-                    if (lineStream.peek() == ']')
-                    {
-                        lineStream.get();  // Consume the ']'
-                        readingSpectrum = false;
-                        break;
-                    }
-                }
+            // Break if we find the closing bracket
+            if (lineStream.peek() == ']')
+            {
+                lineStream.get();  // Consume the ']'
+                readingSpectrum = false;
+                break;
             }
         }
 
