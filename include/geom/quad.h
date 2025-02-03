@@ -36,6 +36,7 @@ class Quad : public Primitive
 	vector<Triangle> tessellate(void) const;
 	real getArea(void) const;
 	vector<Point3D> getCoordinates(void) const; 
+	Point3D getSamplePoint() const;
 	AABB boundingBox() const;
 };
 
