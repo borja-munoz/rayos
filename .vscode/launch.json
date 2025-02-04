@@ -12,7 +12,13 @@
             // "program": "${workspaceFolder}/build/rayos",
             "program": "${command:cmake.launchTargetPath}",
             // "args": ["s", "1", "1"],
-            "args": ["s", "1", "1", "/Users/Borja/dev/borja-munoz/rayos/cornell-box.pbrt"],
+            "args": 
+            [
+                "--scene", "cornell-box.pbrt", 
+                "--algorithm", "s",
+                "--sample-rays", "1",
+                "--shadow-rays", "1"
+            ],
             //"stopAtEntry": false,
             //"stopOnEntry": true,
             "targetArchitecture": "arm64",
@@ -38,7 +44,13 @@
             // "program": "${workspaceFolder}/build/rayos",
             "program": "${command:cmake.launchTargetPath}",
             // "args": ["s", "1", "1"],
-            "args": ["s", "1", "1", "/Users/Borja/dev/borja-munoz/rayos/cornell-box.pbrt"],
+            "args": 
+            [
+                "--scene", "cornell-box.pbrt", 
+                "--algorithm", "s",
+                "--sample-rays", "1",
+                "--shadow-rays", "1"
+            ],
             //"stopAtEntry": false,
             //"stopOnEntry": true,
             "targetArchitecture": "arm64",

@@ -384,49 +384,34 @@ Material PBRTParser::parseMatteMaterial(std::ifstream& file)
 
                         // Handle case where there's a number after the bracket
                         std::istringstream dataStream(token.substr(1));
-                        if (dataStream >> pendingWavelength) {
-                            continue;  // Wavelength read; wait for intensity
-                        }
+                        dataStream >> pendingWavelength; // Wavelength read; wait for intensity
                     }
                 }
             }
         }
 
-        // Check if we have a pending spectrum wavelenght
-        float value;
-        if (pendingWavelength > 0) 
-        {
-            std::istringstream iss(token);
-            iss >> value;
-            spectrumData[pendingWavelength] = value;
-            pendingWavelength = -1.0f;
-        }
-
         // Read remaining spectrum values
-        while (lineStream >> value)
+        float value;
+        if (readingSpectrum) 
         {
-            if (pendingWavelength < 0)  // Expecting wavelength
+            while (lineStream >> value)
             {
-                pendingWavelength = value;
-            }
-            else  // Expecting intensity
-            {
-                spectrumData[pendingWavelength] = value;
-                pendingWavelength = -1.0f;  // Reset for next pair
+                if (pendingWavelength < 0)  // Expecting wavelength
+                {
+                    pendingWavelength = value;
+                }
+                else  // Expecting intensity
+                {
+                    spectrumData[pendingWavelength] = value;
+                    pendingWavelength = -1.0f;  // Reset for next pair
+                }
             }
 
-            // Break if we find the closing bracket
-            if (lineStream.peek() == ']')
+            if (line.find(']') != std::string::npos)
             {
-                lineStream.get();  // Consume the ']'
                 readingSpectrum = false;
-                break;
+                break;  // Exit the loop once spectrum parsing is complete
             }
-        }
-
-        if (!readingSpectrum)
-        {
-            break;  // Exit the loop once spectrum parsing is complete
         }
     }
 

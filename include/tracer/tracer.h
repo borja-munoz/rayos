@@ -54,6 +54,7 @@ class Tracer
   protected:
   RenderStats renderStats;
   TimeStats timeStats;
+  bool useBVH = false;
 
   public:
 	Tracer();
