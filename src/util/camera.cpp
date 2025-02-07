@@ -3,7 +3,7 @@
 
 Camera::Camera()
 {
-	this->location = Point3D(0, 0, -0.75);
+	this->location = Point3D(0, 0, 1.4);
 	this->view = Point3D(0, 0, -2);
 	this->up = Vector3D(0, 1, 0);
 	this->hFov = 60;
