@@ -19,20 +19,6 @@
 #include "tracer/stochasticRayTracer.h"
 #include "tracer/brdf.h"
 
-std::string getFilename(char *argv[])
-{
-  auto time = std::time(nullptr);
-  std::stringstream ss;
-  ss << std::put_time(std::localtime(&time), "%F_%T"); // ISO 8601 without timezone information.
-  auto strCurrentTime = ss.str();
-  std::replace(strCurrentTime.begin(), strCurrentTime.end(), ':', '-');
-
-  std::stringstream filename;
-  filename << "output/" << argv[1] << "-" << argv[2] << "-" << argv[3] << "-" << strCurrentTime.c_str() << ".tga";
-
-  return (filename.str());
-}
-
 enum Algorithm 
 { 
   WHITTED = 'w', 
@@ -47,6 +33,25 @@ struct ProgramArgs
     int sampleRays = 1;
     int shadowRays = 1;
 };
+
+std::string getFilename(ProgramArgs args)
+{
+  auto time = std::time(nullptr);
+  std::stringstream ss;
+  ss << std::put_time(std::localtime(&time), "%F_%T"); // ISO 8601 without timezone information.
+  auto strCurrentTime = ss.str();
+  std::replace(strCurrentTime.begin(), strCurrentTime.end(), ':', '-');
+
+  std::stringstream filename;
+  filename << 
+    "output/" << 
+    static_cast<char>(args.algorithm) << "-" << 
+    args.sampleRays << "-" << 
+    args.shadowRays << "-" << 
+    strCurrentTime.c_str() << ".tga";
+
+  return (filename.str());
+}
 
 std::optional<ProgramArgs> parseArgs(int argc, char* argv[]) 
 {
@@ -188,10 +193,9 @@ int main(int argc, char *argv[])
   // Stop chrono
   c->stop();
   cout << "Elapsed time = " << c->value() << " seconds\n";
-  delete (c);
 
   // Write the image to a file
-  std::string strFilename = getFilename(argv);
+  std::string strFilename = getFilename(args);
   const char *filename = strFilename.c_str();
   im->writeTGA(filename);
   // im->writeTGA("imagen.tga");
@@ -215,14 +219,18 @@ int main(int argc, char *argv[])
   strFilename.replace(strFilename.find(".tga"), sizeof(".tga") - 1, ".txt");
   ofstream o;
   o.open(strFilename.c_str());
-  o << "Algorithm: " << ((!strcmp(argv[1], "w")) ? "Whitted" : "Stochastic") << "\n";
-  o << "Sample Rays: " << argv[2] << "\n";
-  o << "Shadow Rays: " << argv[3] << "\n";
+  o << "Algorithm: " << ((args.algorithm == Algorithm::WHITTED) ? "Whitted" : "Stochastic") << "\n";
+  o << "Scene: " << (!(args.sceneFilename.empty()) ? args.sceneFilename : "") << "\n";
+  o << "Elapsed time: " << c->value() << " seconds\n";
+  o << "Sample Rays: " << args.sampleRays << "\n";
+  o << "Shadow Rays: " << args.shadowRays << "\n";
   o << "Time Get Hit Point: " << rt->getTimeStats().timeGetHitPoint << " ms\n";  
   o << "Time Radiance: " << rt->getTimeStats().timeCalculateRadiance << " ms\n";
   o << "Time Mutually Visible: " << rt->getTimeStats().timeMutuallyVisible << " ms\n";
   o << "Time Pixel: " << rt->getTimeStats().timePixel << " ms\n";
   o.close();
+
+  delete (c);
 
   return (0);
 }
