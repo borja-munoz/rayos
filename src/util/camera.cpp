@@ -56,10 +56,10 @@ void Camera::initialize(void)
 {
 	// Camera coordinate system
 	this->zCam = this->view.substract(this->location);          // Z axis is the direction from the camera to the point where the
-                                                                 // camera is pointing
-	this->xCam = this->zCam.crossProduct(this->up);             // X axis is perpendicular to Z axis and UP vector
+    this->zCam.normalize();                                     // camera is pointing
+	this->xCam = this->up.crossProduct(this->zCam);             // X axis is perpendicular to Z axis and UP vector
 	this->xCam.normalize();
-	this->yCam = this->zCam.crossProduct(this->xCam);           // Y axis is perpendicular to X and Z axis
+	this->yCam = this->xCam.crossProduct(this->zCam);           // Y axis is perpendicular to X and Z axis
 	this->yCam.normalize();
 
 	// Viewport origin (Camera location shifted in a distance equal to the viewplane in 
@@ -67,8 +67,8 @@ void Camera::initialize(void)
 	this->oViewport = this->location.sum(this->zCam.product(this->distance));	
 
 	// Viewport axis in the viewplane
-	this->uViewport = this->xCam.product(this->distance * tan(RADIANS(this->hFov)));
-	this->vViewport = this->yCam.product(this->distance * tan(RADIANS(this->vFov)));
+    this->uViewport = this->xCam.product(this->distance * tan(RADIANS(this->hFov) / 2.0));
+    this->vViewport = this->yCam.product(this->distance * tan(RADIANS(this->vFov) / 2.0));
 }
 
 Point3D Camera::getLocation(void)
@@ -96,11 +96,16 @@ Ray Camera::getEyeRay(real x, real y)
 	Point3D pViewport;
 
     // First we need to calculate the point in the viewport where the ray goes through
+    // Compute normalized device coordinates
 	// P = oViewport + (alfa * uViewport) + (beta * vViewport)
 	// alfa y beta represents the pixel center
-	alfa = ((2 * (x + 0.5)) / this->xRes) - 1;
+	alfa = ((2 * (x + 0.5)) / this->xRes) - 1; // Range [-1, 1]
 	beta = 1 - ((2 * (y + 0.5)) / this->yRes); // Inverted because Y axis in the viewport is different than the one in the image
-	pViewport = oViewport.sum(uViewport.product(alfa).sum(vViewport.product(beta)));
+
+	// Compute the point on the viewport in world space
+    pViewport = oViewport
+				.sum(uViewport.product(alfa))  // Horizontal displacement
+				.sum(vViewport.product(beta)); // Vertical displacement
 
     // Ray direction will be the vector from the point in the viewport to the camera location
 	direction = pViewport.substract(this->location);
@@ -109,7 +114,6 @@ Ray Camera::getEyeRay(real x, real y)
 	// We use the camera location as ray origin
 	return Ray(this->location, direction);
 }
-
 
 vector<Ray> Camera::getSampleEyeRays(real x, real y, unsigned int sampleRays)
 {
