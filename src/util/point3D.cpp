@@ -43,6 +43,36 @@ real& Point3D::operator[](size_t index)
   }
 }
 
+// Const operator+ that returns a new Point3D
+Point3D Point3D::operator+(Point3D otherPoint) const {
+    return Point3D(
+        x + otherPoint.x, 
+        y + otherPoint.y, 
+        z + otherPoint.z
+    );
+}
+
+// Non-const operator+ that returns a new Point3D
+Point3D& Point3D::operator+=(Point3D otherPoint) {
+    x += otherPoint.x;
+    y += otherPoint.y;
+    z += otherPoint.z;
+    return *this;
+}
+
+// Const operator* that returns a new Point3D
+Point3D Point3D::operator*(real scalar) const {
+    return Point3D(x * scalar, y * scalar, z * scalar);
+}
+
+// Non-const operator* that returns a new Point3D
+Point3D& Point3D::operator*=(real scalar) {
+    x *= scalar;
+    y *= scalar;
+    z *= scalar;
+    return *this;
+}
+
 Point3D Point3D::sum(const Vector3D& v) const
 {
   return(Point3D(this->x + v.x,

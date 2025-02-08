@@ -1,4 +1,4 @@
-#include "stochasticRayTracer.h"
+#include "tracer/stochasticRayTracer.h"
 #include "util/chrono.h"
 
 #include <sstream>
@@ -10,11 +10,15 @@ StochasticRayTracer::StochasticRayTracer()
   indirectRays = 4;
 }
 
-StochasticRayTracer::StochasticRayTracer(unsigned int sampleRays, unsigned int shadowRays)
+StochasticRayTracer::StochasticRayTracer(
+  unsigned int sampleRays, 
+  unsigned int shadowRays,
+  bool useBVH)
 {
   this->sampleRays = sampleRays;
   this->shadowRays = shadowRays;
   this->indirectRays = 4;
+  this->useBVH = useBVH;
 }
 
 StochasticRayTracer::StochasticRayTracer(BRDFtype t)
@@ -35,7 +39,10 @@ std::shared_ptr<Bitmap> StochasticRayTracer::trace(std::shared_ptr<Scene> s)
   Ray eyeRay;
   vector<real> probLight;
 
-  s->buildBVH();
+  if (useBVH)
+  {
+    s->buildBVH();
+  }
 
   cam = s->getCamera();
 

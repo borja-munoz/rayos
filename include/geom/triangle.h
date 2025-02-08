@@ -23,6 +23,8 @@ class Triangle : public Primitive
              Point3D y, 
              Point3D z, 
              Material mat);
+	Point3D getVertex(int index) const;
+	Vector3D getNormal() const;
 	real intersect(const Ray& r, Vector3D &normal, real tMin, real tMax) const;
 	AABB boundingBox() const;
 };

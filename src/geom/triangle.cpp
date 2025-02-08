@@ -45,6 +45,16 @@ Triangle::Triangle(Point3D x,
   this->type = TRIANGLE;
 }
 
+Point3D Triangle::getVertex(int index) const
+{
+  return this->vertex[index];
+}
+
+Vector3D Triangle::getNormal() const
+{
+  return this->normal;
+}
+
 // Intersects the polygon with a ray
 // If there is a hit, returns:
 // - Hit point

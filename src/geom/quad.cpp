@@ -254,6 +254,49 @@ vector<Point3D> Quad::getCoordinates(void) const
 	return(coordinates);
 }
 
+// Returns a random point within the quad
+Point3D Quad::getSamplePoint() const
+{
+	Point3D samplePoint, p;
+	real xi, eta;
+	Vector3D aux1, aux2, aux3;
+
+    // To generate a random point within a quad,
+    // we have used information from this URL:
+	// http://www.magic-software.com/Resources/TechPosts/RandomPointInAQuad.Nov2001.txt
+
+    // We could also divide the quad in two triangles and generate
+    // a random point within one of the them
+
+	xi  = getRandomNumberMT(-1, 1);
+	eta = getRandomNumberMT(-1, 1);
+
+	// samplePoint = {(1-xi)(1-eta)A + (1+xi)(1-eta)B + (1+xi)(1+eta)C + (1-xi)((1+eta)D} / 4
+
+	p = this->vertex[0];
+	aux1 = Vector3D(p.x, p.y, p.z);
+	aux2 = aux1.product((1 - xi) * (1 - eta));  // aux2 = (1-xi)(1-eta)A
+
+	p = this->vertex[1];
+	aux1 = Vector3D(p.x, p.y, p.z);
+	aux3 = aux1.product((1 + xi) * (1 - eta));
+	aux1 = aux2.sum(aux3);					  // aux1 = (1-xi)(1-eta)A + (1+xi)(1-eta)B
+
+	p = this->vertex[2];
+	aux2 = Vector3D(p.x, p.y, p.z);
+	aux3 = aux2.product((1 + xi) * (1 + eta));
+	aux2 = aux1.sum(aux3);					  // aux2 = (1-xi)(1-eta)A + (1+xi)(1-eta)B + (1+xi)(1+eta)C
+
+	p = this->vertex[3];
+	aux1 = Vector3D(p.x, p.y, p.z);
+	aux3 = aux1.product((1 - xi) * (1 + eta));
+	aux1 = aux2.sum(aux3);				  
+
+	samplePoint = Point3D(aux1.x / 4, aux1.y / 4, aux1.z / 4);
+
+	return(samplePoint);
+}
+
 AABB Quad::boundingBox() const
 {
     // Initialize min and max points to the first vertex

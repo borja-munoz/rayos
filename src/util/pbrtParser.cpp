@@ -3,6 +3,13 @@
 std::shared_ptr<Scene> PBRTParser::parse() 
 {
     std::shared_ptr<Scene> scene = std::make_shared<Scene>();
+
+    // Remove lights and objects created by the default constructor
+    // Another option would be to create a constructor that takes
+    // a camera and a list of objects and lights
+    scene->lights.clear();
+    scene->objects.clear();
+
     std::ifstream file(filename);
     if (!file.is_open()) 
     {
@@ -14,7 +21,6 @@ std::shared_ptr<Scene> PBRTParser::parse()
     bool inWorldBlock = false;
 
     Material currentMaterial;
-    std::shared_ptr<Light> currentLight = nullptr;
 
     Camera camera;
     real fov;
@@ -45,6 +51,7 @@ std::shared_ptr<Scene> PBRTParser::parse()
                 {
                     camera.setFOV(*fov);
                 }
+                scene->setCamera(camera);
             } 
             else if (keyword == "PixelFilter") 
             {
@@ -64,34 +71,25 @@ std::shared_ptr<Scene> PBRTParser::parse()
             // Handle scene elements inside WorldBegin/WorldEnd
             if (keyword == "AttributeBegin") 
             {
-                currentMaterial = Material();
-                currentLight = nullptr;
             } 
             else if (keyword == "AttributeEnd") 
             {
-                currentMaterial = Material();
             } 
             else if (keyword == "Material") 
             {
-                currentMaterial = parseMaterial(iss);
+                currentMaterial = parseMaterial(file, iss);
             } 
             else if (keyword == "Shape") 
             {
-                auto primitive = parseShape(iss, currentMaterial);
-                if (primitive) 
-                {
-                    scene->addObject(primitive);
-                }
+                scene->addObject(parseShape(file, iss, currentMaterial));
             } 
             else if (keyword == "AreaLightSource") 
             {
-                currentLight = parseAreaLight(file, iss);
-                scene->addLight(currentLight);
+                scene->addLight(parseAreaLight(file, iss));
             } 
             else if (keyword == "PointLightSource") 
             {
-                currentLight = parsePointLight(iss);
-                scene->addLight(currentLight);
+                scene->addLight(parsePointLight(iss));
             }
         }
     }
@@ -192,8 +190,11 @@ std::shared_ptr<RectLight> PBRTParser::parseAreaLight(
     std::string spectrumKey;
     stream >> lightType >> spectrumKey;
 
-    if (spectrumKey == "\"spectrum\"") 
+    if (spectrumKey == "\"spectrum") 
     {
+        std::string spectrumType;
+        stream >> spectrumType;
+        
         char bracket;
         stream >> bracket;
 
@@ -219,20 +220,23 @@ std::shared_ptr<RectLight> PBRTParser::parseAreaLight(
     // the shape for the light source until we find the AttributeEnd token
     while (std::getline(file, line)) 
     {
-        std::istringstream newLineStream(line);
-        newLineStream >> keyword;
-
-        if (keyword == "Material") 
+        if (line != "") 
         {
-            material = parseMaterial(newLineStream);
-        } 
-        else if (keyword == "Shape") 
-        {
-            shape = parseShape(newLineStream, material);
-        } 
-        else if (keyword == "AttributeEnd") 
-        {
-            break;
+            std::istringstream newLineStream(line);
+            keyword = "";
+            newLineStream >> keyword;
+            if (keyword == "Material") 
+            {
+                material = parseMaterial(file, newLineStream);
+            } 
+            else if (keyword == "Shape") 
+            {
+                shape = parseShape(file, newLineStream, material);
+            } 
+            else if (keyword == "AttributeEnd") 
+            {
+                break;
+            }
         }
     }
 
@@ -240,6 +244,7 @@ std::shared_ptr<RectLight> PBRTParser::parseAreaLight(
 }
 
 std::shared_ptr<Primitive> PBRTParser::parseShape(
+    std::ifstream& file,
     std::istringstream& stream,
     Material currentMaterial
 ) 
@@ -255,45 +260,70 @@ std::shared_ptr<Primitive> PBRTParser::parseShape(
     std::vector<Point3D> vertices;
     std::vector<int> vertexIndexes;
 
-    std::string token;
-    while (stream >> token) {
-        if (token == "\"point\"") {
+    std::string line;
+    bool finishedReadingVertices = false;
+    while (std::getline(file, line)) {
+        std::istringstream stream(line);
+        std::string token;
+        stream >> token;
+
+        if (token == "\"point") {
             // Parse vertices
             std::string attributeName;
             stream >> attributeName;  // Expect "P"
-            if (attributeName != "P") continue;
+            if (attributeName != "P\"") continue;
 
             char bracket;
             stream >> bracket;  // Consume opening bracket '['
+            if (bracket != '[') continue;
 
             float x, y, z;
-            while (stream >> x >> y >> z) {
-                vertices.emplace_back(x, y, z);
+            while (std::getline(file, line)) {
+                std::istringstream vertexStream(line);
+                if (vertexStream >> x >> y >> z) {
+                    vertices.emplace_back(x, y, z);
+                }
 
-                // Break if we encounter the closing bracket
-                if (stream.peek() == ']') {
-                    stream.ignore();  // Ignore the closing bracket ']'
+                // Keep reading characters in the current line
+                // to see if we encounter the closing bracket
+                vertexStream >> bracket;
+                if (bracket == ']') 
+                {
+                    finishedReadingVertices = true;
                     break;
                 }
             }
-        } else if (token == "\"integer\"") {
+        } else if (token == "\"integer") {
             std::string attributeName;
             stream >> attributeName;  // Expect "indices"
-            if (attributeName != "indices") continue;
+            if (attributeName != "indices\"") continue;
 
             char bracket;
             stream >> bracket;  // Consume opening bracket '['
+            if (bracket != '[') continue;
 
             int index;
-            while (stream >> index) {
-                vertexIndexes.push_back(index);
+            while (true) {
+                while (stream >> index) {
+                    vertexIndexes.push_back(index);
+                }
 
                 // Break if we encounter the closing bracket
-                if (stream.peek() == ']') {
-                    stream.ignore();  // Ignore the closing bracket ']'
+                if (line.find(']') != std::string::npos) {
                     break;
                 }
+
+                // Read the next line if not finished
+                if (!std::getline(file, line)) {
+                    break;
+                }
+                stream.clear();
+                stream.str(line);
             }
+        }
+        if (finishedReadingVertices) 
+        {
+            break;
         }
     }
 
@@ -301,10 +331,13 @@ std::shared_ptr<Primitive> PBRTParser::parseShape(
     std::shared_ptr<TriangleMesh> mesh;
     mesh = std::make_shared<TriangleMesh>(vertices, vertexIndexes, currentMaterial);
 
-    return(mesh);
+    return mesh;
 }
 
-Material PBRTParser::parseMaterial(std::istringstream& stream) {
+Material PBRTParser::parseMaterial(
+    std::ifstream& file, 
+    std::istringstream& stream) 
+{
     std::string materialType;
     stream >> materialType;
 
@@ -312,7 +345,7 @@ Material PBRTParser::parseMaterial(std::istringstream& stream) {
 
     // Parse specific material properties
     if (materialType == "\"matte\"") {
-        material = parseMatteMaterial(stream);
+        material = parseMatteMaterial(file);
     } else if (materialType == "\"plastic\"") {
         material = parsePlasticMaterial(stream);
     } else {
@@ -322,28 +355,76 @@ Material PBRTParser::parseMaterial(std::istringstream& stream) {
     return material;
 }
 
-Material PBRTParser::parseMatteMaterial(std::istringstream& stream) {
-    Color kdColor(0.5f, 0.5f, 0.5f);  // Default diffuse color
-    real ka = 0.1f, kd = 0.6f;
+Material PBRTParser::parseMatteMaterial(std::ifstream& file)
+{
+    std::map<float, float> spectrumData;
+    std::string line;
 
-    std::string token;
-    while (stream >> token) {
-        if (token == "\"rgb\"") {
-            std::string paramName;
-            stream >> paramName;
-            if (paramName == "Kd") {
-                kdColor = parseRGBColor(stream);
+    bool readingSpectrum = false;
+    float pendingWavelength = -1.0f;
+
+    while (std::getline(file, line))
+    {
+        std::istringstream lineStream(line);
+        std::string token;
+
+        if (!readingSpectrum)
+        {
+            // Look for spectrum Kd definition
+            lineStream >> token;
+            if (token == "\"spectrum")
+            {
+                lineStream >> token;
+                if (token == "Kd\"")
+                {
+                    lineStream >> token; // Expect '[' after Kd
+                    if (!token.empty() && token[0] == '[')  // Handle both "[" and "[400"
+                    {
+                        readingSpectrum = true;
+
+                        // Handle case where there's a number after the bracket
+                        std::istringstream dataStream(token.substr(1));
+                        dataStream >> pendingWavelength; // Wavelength read; wait for intensity
+                    }
+                }
             }
-        } else if (token == "\"spectrum\"") {
-            std::string paramName;
-            stream >> paramName;
-            if (paramName == "Kd") {
-                kdColor = parseSpectrumColor(stream);
+        }
+
+        // Read remaining spectrum values
+        float value;
+        if (readingSpectrum) 
+        {
+            while (lineStream >> value)
+            {
+                if (pendingWavelength < 0)  // Expecting wavelength
+                {
+                    pendingWavelength = value;
+                }
+                else  // Expecting intensity
+                {
+                    spectrumData[pendingWavelength] = value;
+                    pendingWavelength = -1.0f;  // Reset for next pair
+                }
+            }
+
+            if (line.find(']') != std::string::npos)
+            {
+                readingSpectrum = false;
+                break;  // Exit the loop once spectrum parsing is complete
             }
         }
     }
 
-    return Material(kdColor, ka, kd, 0.0f, 0.0f);  // Matte materials are not specular/emissive
+    // Create the spectrum-based Color
+    Color kdColor(spectrumData);
+
+    // Default material parameters for a matte material
+    real ka = 0.0f;  // No ambient by default
+    real kd = 1.0f;  // Full diffuse reflection
+    real ks = 0.0f;  // No specular for matte
+    real ke = 0.0f;  // No emissive properties
+
+    return Material(kdColor, ka, kd, ks, ke);
 }
 
 Material PBRTParser::parsePlasticMaterial(std::istringstream& stream) {
@@ -403,15 +484,4 @@ Color PBRTParser::parseSpectrumColor(std::istringstream& stream) {
     }
 
     return Color(spectrumData);
-}
-
-Material PBRTParser::parseNamedMaterial(std::istringstream& stream) 
-{
-    std::string materialName;
-    stream >> materialName;
-
-    Material material = parseMatteMaterial(stream);  // Default to matte material parsing
-    materialMap[materialName] = material;
-
-    return material;
 }

@@ -92,7 +92,13 @@ class Color
 
     // Spectrum Constructor
     Color(const std::map<float, float>& spectrumData)
-        : type(SPECTRUM), spectrum(spectrumData) {}
+        : type(SPECTRUM), spectrum(spectrumData) 
+    {
+        auto [R, G, B] = toRGB();
+        r = R;
+        g = G;
+        b = B;
+    }
 
     real getR(void);
     real getG(void);

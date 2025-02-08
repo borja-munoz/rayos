@@ -37,6 +37,8 @@ class TriangleMesh : public Primitive
 	real intersect(const Ray& r, Vector3D &normal, real tMin, real tMax) const;
   int getNumberTriangles();
   int getNumberVertices();
+  Point3D getSamplePoint();
+  Triangle getTriangle(int index);
 	AABB boundingBox() const;
   
   private:

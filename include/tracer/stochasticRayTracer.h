@@ -38,7 +38,7 @@ class StochasticRayTracer : public Tracer
 
   public:
 	StochasticRayTracer();
-	StochasticRayTracer(unsigned int sampleRays, unsigned int shadowRays);
+	StochasticRayTracer(unsigned int sampleRays, unsigned int shadowRays, bool useBVH);
 	StochasticRayTracer(BRDFtype t);
 	std::shared_ptr<Bitmap> trace(std::shared_ptr<Scene> s);
 };

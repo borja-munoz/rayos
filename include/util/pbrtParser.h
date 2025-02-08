@@ -27,11 +27,10 @@ class PBRTParser
     std::optional<real> parseCamera(std::istringstream& stream);
     std::shared_ptr<PointLight> parsePointLight(std::istringstream& stream);
     std::shared_ptr<RectLight> parseAreaLight(std::ifstream& file, std::istringstream& stream);
-    std::shared_ptr<Primitive> parseShape(std::istringstream& stream, Material currentMaterial);
-    Material parseMaterial(std::istringstream& stream);
-    Material parseMatteMaterial(std::istringstream& stream);
+    std::shared_ptr<Primitive> parseShape(std::ifstream& file, std::istringstream& stream, Material currentMaterial);
+    Material parseMaterial(std::ifstream& file, std::istringstream& stream);
+    Material parseMatteMaterial(std::ifstream& file);
     Material parsePlasticMaterial(std::istringstream& stream);
-    Material parseNamedMaterial(std::istringstream& stream);
     Color parseRGBColor(std::istringstream& stream);
     Color parseSpectrumColor(std::istringstream& stream);
 
