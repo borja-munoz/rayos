@@ -60,6 +60,10 @@ std::unique_ptr<BVHNode> BVH::buildNode(const std::vector<std::shared_ptr<Primit
         // Ensure the split is valid to avoid degenerate cases
         size_t mid = std::distance(indices.begin(), midIt);
         if (mid == start || mid == end) {
+            // This line rearranges the elements so that the middle element 
+            // is placed as if the range were sorted, helping ensure balanced 
+            // partitions. Useful when SAH-based partitioning fails.
+            std::nth_element(indices.begin() + start, indices.begin() + start + numPrimitives / 2, indices.begin() + end);
             mid = start + numPrimitives / 2;
         }
 
