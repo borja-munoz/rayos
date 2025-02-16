@@ -1,7 +1,11 @@
 #ifndef _UTIL_H
 #define _UTIL_H
 
+#include <chrono>
+#include <iomanip>
+#include <iostream>
 #include <math.h>
+#include <string>
 
 
 //-------------------------------------------------------------------
@@ -51,5 +55,9 @@ real getRandomNumberSSE(real x, real y);
 
 // Memory alignment
 #define ALIGN(limite) __declspec(align(limite))
+
+void printProgressBar(double progress, double elapsedTime, double remainingTime, 
+                      long long sampleRays, long long shadowRays, long long indirectRays,
+                      double raysPerSec);
 
 #endif

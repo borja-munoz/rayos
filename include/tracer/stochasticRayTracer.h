@@ -4,6 +4,8 @@
 #include "tracer.h"
 #include "../util/util.h"
 
+#include <atomic>
+#include <chrono>
 #include <iostream>
 #include <vector>
 
@@ -14,8 +16,12 @@ using namespace std;
 class StochasticRayTracer : public Tracer
 {
 	unsigned int sampleRays;                     // Number of rays per pixel
-	unsigned int shadowRays;					 // Number of shadow rays
+	unsigned int shadowRays;					           // Number of shadow rays
 	unsigned int indirectRays;                   // Number of indirect rays
+
+  std::atomic<long long> sampleRaysTraced{0};
+  std::atomic<long long> shadowRaysTraced{0};
+  std::atomic<long long> indirectRaysTraced{0};
 
 	Color traceRay(const Ray& r, 
                  std::shared_ptr<Scene> s, 
@@ -35,6 +41,8 @@ class StochasticRayTracer : public Tracer
                          HitPoint h, 
                          std::vector<real> probLight);
 	Vector3D getRandomDirection(void);
+
+  Color indirectLightHeatmap(Color indirect);
 
   public:
 	StochasticRayTracer();

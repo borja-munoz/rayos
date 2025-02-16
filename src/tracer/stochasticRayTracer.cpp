@@ -65,6 +65,15 @@ std::shared_ptr<Bitmap> StochasticRayTracer::trace(std::shared_ptr<Scene> s)
   int tileSize = 16; 
   int tileRows = ry / tileSize;
   int tileColumns = rx / tileSize;
+  int totalTiles = tileRows * tileColumns;
+
+  std::atomic<int> completedTiles{0};  // Atomic counter for progress tracking
+
+  // Timer for progress tracking
+  auto startTime = std::chrono::high_resolution_clock::now();
+
+  // Print three blank lines at the start so we can overwrite them later
+  std::cout << "\n\n\n";
 
 // Important to define thread shared and private variables
 // to avoid data races.
@@ -83,15 +92,18 @@ std::shared_ptr<Bitmap> StochasticRayTracer::trace(std::shared_ptr<Scene> s)
   collapse(2)
   // schedule(dynamic, 1)   
 
-  for (int tileRow = 0; tileRow < tileRows; tileRow++) {
-    for (int tileColumn = 0; tileColumn < tileColumns; tileColumn++) {
+  for (int tileRow = 0; tileRow < tileRows; tileRow++) 
+  {
+    for (int tileColumn = 0; tileColumn < tileColumns; tileColumn++) 
+    {
 
       // Only the two outer loops are parallelized, these inner
       // loops are executed completely in the same thread
 
-      for (int xTile = 0; xTile < tileSize; xTile++) {
-        for (int yTile = 0; yTile < tileSize; yTile++) {
-
+      for (int xTile = 0; xTile < tileSize; xTile++) 
+      {
+        for (int yTile = 0; yTile < tileSize; yTile++) 
+        {
           int pixelX = xTile + tileRow * tileSize;
           int pixelY = yTile + tileColumn * tileSize;
 
@@ -103,6 +115,8 @@ std::shared_ptr<Bitmap> StochasticRayTracer::trace(std::shared_ptr<Scene> s)
             eyeRay = cam.getEyeRay(pixelX, pixelY);
 
             radiance = traceRay(eyeRay, s, probLight, viewer);
+
+            this->sampleRaysTraced.fetch_add(1); // Single ray traced            
           }
           else
           {
@@ -112,11 +126,12 @@ std::shared_ptr<Bitmap> StochasticRayTracer::trace(std::shared_ptr<Scene> s)
             radiance = Color(0, 0, 0);
             for (unsigned int k = 0; k < this->sampleRays; k++)
             {
-
               // _CrtMemState s1, s2, s3;
               // _CrtMemCheckpoint(&s1);
 
               rad = traceRay(eyeRays[k], s, probLight, viewer);
+
+              this->sampleRaysTraced.fetch_add(1); // Count each traced ray
 
               for (unsigned int x = 0; x < 3; x++)
                 radiance += rad;
@@ -136,17 +151,43 @@ std::shared_ptr<Bitmap> StochasticRayTracer::trace(std::shared_ptr<Scene> s)
           // cout << "Pixel elapsed time = " << c->value() * 1000 << " milliseconds\n";
         }
       }
+
+      // Update the progress counter after processing one tile
+      int tilesProcessed = completedTiles.fetch_add(1) + 1;
+
+      // Display progress every 5% or at the end
+      if (tilesProcessed % (totalTiles / 20) == 0 || tilesProcessed == totalTiles) 
+      {
+        auto now = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = now - startTime;
+        double avgTimePerTile = elapsed.count() / tilesProcessed;
+        double remainingTime = avgTimePerTile * (totalTiles - tilesProcessed);
+
+        // Calculate rays per second (millions of rays per second)
+        double raysPerSec = (sampleRaysTraced.load() + shadowRaysTraced.load() + indirectRaysTraced.load()) / (elapsed.count() * 1e6);
+
+        #pragma omp critical
+        {
+            printProgressBar(
+                static_cast<double>(tilesProcessed) / totalTiles, 
+                elapsed.count(),
+                remainingTime,
+                sampleRaysTraced.load(),
+                shadowRaysTraced.load(),
+                indirectRaysTraced.load(),
+                raysPerSec
+            );
+        }
+      }
     }
     // if (i % 10 == 0)
     //   cout << "Completed = " << i * 100 / ry << "%" << endl;
   }
 
-  cout << "Time Get Hit Point: " << this->timeStats.timeGetHitPoint << " ms\n";
-  
-  cout << "Time Radiance: " << this->timeStats.timeCalculateRadiance << " ms\n";
-  cout << "Time Mutually Visible: " << this->timeStats.timeMutuallyVisible << " ms\n";
-  
-  cout << "Time Pixel: " << this->timeStats.timePixel << " ms\n";
+  // cout << "Time Get Hit Point: " << this->timeStats.timeGetHitPoint << " ms\n";
+  // cout << "Time Radiance: " << this->timeStats.timeCalculateRadiance << " ms\n";
+  // cout << "Time Mutually Visible: " << this->timeStats.timeMutuallyVisible << " ms\n";
+  // cout << "Time Pixel: " << this->timeStats.timePixel << " ms\n";
 
   return (im);
 }
@@ -225,18 +266,53 @@ Color StochasticRayTracer::calculateRadiance(HitPoint h,
 
   // Chrono *c2 = new Chrono();
   // c2->start();
-  //indirectLighting = this->indirectLighting(s, h, probLight);
+  indirectLighting = this->indirectLighting(s, h, probLight);
   // c2->stop();
   // this->timeStats.timeIndirectLighting += c2->value() * 1000;
   // cout << "indirectLighting elapsed time = " << c2->value() * 1000 << " milliseconds\n";
 
-  //reflectedRadiance = directLighting + indirectLighting;
-  reflectedRadiance = directLighting;
+  reflectedRadiance = directLighting + indirectLighting;
+  // reflectedRadiance = directLighting;
+  // reflectedRadiance = directLighting + Color(0.5, 0.2, 0.2);
+  // reflectedRadiance = this->indirectLightHeatmap(indirectLighting * 10.0);
+
+  // if (indirectLighting.getR() > 0.0 || 
+  //     indirectLighting.getG() > 0.0 || 
+  //     indirectLighting.getB() > 0.0)
+  // {
+  //    cout << "Indirect Lighting = " << indirectLighting << "\n";
+  // } 
 
   radiance = emittedRadiance + reflectedRadiance;
 
   return (radiance);
 }
+
+// Method to render a heatmap of the indirect light
+Color StochasticRayTracer::indirectLightHeatmap(Color indirect)
+{
+    // Get intensity from indirect radiance
+    real intensity = (indirect.getR() + indirect.getG() + indirect.getB()) / 3.0;
+
+    // Normalize intensity (clamp to [0, 1] for display)
+    intensity = std::min(1.0, std::max(0.0, intensity));
+
+    // Simple heatmap: blue → green → yellow → red
+    if (intensity < 0.25) {
+        // 0.00 to 0.25: Blue to Cyan
+        return Color(0, intensity * 4, 1);
+    } else if (intensity < 0.5) {
+        // 0.25 to 0.50: Cyan to Green
+        return Color(0, 1, 1 - (intensity - 0.25) * 4);
+    } else if (intensity < 0.75) {
+        // 0.50 to 0.75: Green to Yellow
+        return Color((intensity - 0.5) * 4, 1, 0);
+    } else {
+        // 0.75 to 1.00: Yellow to Red
+        return Color(1, 1 - (intensity - 0.75) * 4, 0);
+    }
+}
+
 
 // Calculates emitted radiance
 Color StochasticRayTracer::emittedRadiance(std::shared_ptr<Scene> s,
@@ -292,6 +368,8 @@ Color StochasticRayTracer::directLighting(std::shared_ptr<Scene> s,
   radiance = Color(0, 0, 0);
   for (unsigned int i = 0; i < this->shadowRays; i++)
   {
+    this->shadowRaysTraced.fetch_add(1);
+
     // Light source selection
     lightIndex = (int)getRandomIntMT(0, s->getNumberLights() - 1);
 
@@ -366,7 +444,8 @@ Color StochasticRayTracer::indirectLighting(std::shared_ptr<Scene> s,
   real distancePointLight;
 
   // Initialize
-  alfa = (real)0.8; // Alfa is the material absortion probability
+  alfa = (real)0.5; // Alfa is the material absortion probability
+  // alfa = (real)0.2; // Alfa is the material absortion probability
   P = 1 - alfa;
   r = Ray();
   r.origin = h.hitPoint;
@@ -385,6 +464,8 @@ Color StochasticRayTracer::indirectLighting(std::shared_ptr<Scene> s,
     radiance = Color(0, 0, 0);
     for (unsigned int i = 0; i < this->indirectRays; i++)
     {
+      this->indirectRaysTraced.fetch_add(1);
+
       // We obtain a random direction by uniformly sampling the hemisphere
       psi = this->getRandomDirection();
 
