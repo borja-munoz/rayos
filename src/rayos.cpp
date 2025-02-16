@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
 
   // Stop chrono
   c->stop();
-  cout << "Elapsed time = " << c->value() << " seconds\n";
+  cout << "\n\nElapsed time = " << c->value() << " seconds\n";
 
   // Write the image to a file
   std::string strFilename = getFilename(args);
