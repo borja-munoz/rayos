@@ -30,6 +30,8 @@ class Primitive
   public:
  
 	Primitive();
+	Primitive(Material mat) 
+		: material(mat) {};
 	Material getMaterial(void);
 	ObjectType getType(void);
 	virtual real intersect(const Ray& r, Vector3D& normal, real tMin, real tMax) const = 0;
