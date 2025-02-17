@@ -34,7 +34,8 @@ class TriangleMesh : public Primitive
 	TriangleMesh(std::vector<Point3D> vertices, 
                std::vector<int> vertexIndexes, 
                Material mat);
-	real intersect(const Ray& r, Vector3D &normal, real tMin, real tMax) const;
+  TriangleMesh(const std::shared_ptr<TriangleMesh>& mesh, const Material& mat);
+  real intersect(const Ray& r, Vector3D &normal, real tMin, real tMax) const;
   int getNumberTriangles();
   int getNumberVertices();
   Point3D getSamplePoint();

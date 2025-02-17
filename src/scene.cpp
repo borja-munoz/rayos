@@ -258,6 +258,30 @@ Scene::Scene(const std::string filename)
     // Copy lights
     for (const auto& light : parsedScene->lights) {
         lights.push_back(light);
+        // We also add lights to the list of objects
+        // Check if the light is a RectLight
+        if (std::shared_ptr<RectLight> rectLight = std::dynamic_pointer_cast<RectLight>(light))
+        {
+            // Use the existing TriangleMesh that defines the light's geometry
+            std::shared_ptr<TriangleMesh> lightMesh = 
+              std::dynamic_pointer_cast<TriangleMesh>(rectLight->getLocation());
+
+            // Create an emissive material using the light's color
+            Material emissiveMaterial = Material(
+                rectLight->getColor(),  // Emission color
+                0.0f,                   // ka (ambient)
+                0.0f,                   // kd (diffuse)
+                0.0f,                   // ks (specular)
+                1.0f                    // ke (emission factor, making it a glowing object)
+            );
+
+            // Create an object using the TriangleMesh and emissive material
+            std::shared_ptr<TriangleMesh> lightObject = 
+              std::make_shared<TriangleMesh>(lightMesh, emissiveMaterial);
+
+            // Add the light mesh to the scene objects so it gets rendered
+            objects.push_back(lightObject);
+        }
     }
 
     // Copy primitives

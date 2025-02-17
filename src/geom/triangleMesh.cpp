@@ -79,6 +79,30 @@ TriangleMesh::TriangleMesh(std::vector<Point3D> vertices,
     }
 }
 
+TriangleMesh::TriangleMesh(const std::shared_ptr<TriangleMesh>& mesh, const Material& mat)
+{
+    this->vertices = mesh->vertices;
+    this->vertexIndexes = mesh->vertexIndexes;
+    this->numberTriangles = mesh->numberTriangles;
+    this->material = mat;
+    this->type = TRIANGLE_MESH;
+
+    int j = 0;
+    for (int i = 0; i < this->numberTriangles; i++)
+    {
+        this->triangles.push_back(
+            Triangle(
+                this->vertices[this->vertexIndexes[j]],
+                this->vertices[this->vertexIndexes[j+1]],
+                this->vertices[this->vertexIndexes[j+2]],
+                this->material
+            )
+        );
+
+        j += 3;
+    }
+}
+
 // Returns a random point from a random triangle in the mesh
 Point3D TriangleMesh::getSamplePoint()
 {
