@@ -19,10 +19,12 @@ typedef enum
 // Prototypes
 Color PhongBRDF(Material m, 
                 Vector3D N, 
+                std::shared_ptr<Light> light,
                 Vector3D L, 
                 Vector3D V);
 Color BlinnBRDF(Material m, 
                 Vector3D N, 
+                std::shared_ptr<Light> light,
                 Vector3D L, 
                 Vector3D V);
 

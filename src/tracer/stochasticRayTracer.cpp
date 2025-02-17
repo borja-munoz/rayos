@@ -376,12 +376,6 @@ Color StochasticRayTracer::directLighting(std::shared_ptr<Scene> s,
     // Light point selection
     selectedLight = s->getLight(lightIndex);
     lightPoint = selectedLight->getSamplePoint();
-    lightNormal = selectedLight->getNormal();
-
-    // Ray from hitpoint to light point
-    L = lightPoint.substract(h.hitPoint);
-    distancePointLight = L.length();
-    L.normalize();
 
     // Check if we can see the light point from the hitpoint
     // Chrono *c = new Chrono();
@@ -407,9 +401,16 @@ Color StochasticRayTracer::directLighting(std::shared_ptr<Scene> s,
       // - We will know if the nearest object is a light source by comparing the
       //   object ID with the number of light sources in the scene
 
+      // Ray from hitpoint to light point
+      L = lightPoint.substract(h.hitPoint);
+      distancePointLight = L.length();
+      L.normalize();
+
+      lightNormal = selectedLight->getNormal();
+
       // object = e->getObject(nearestObject);
       mat = h.object->getMaterial();
-      rad = this->BRDF(mat, h.normal, L, dir);
+      rad = this->BRDF(mat, h.normal, selectedLight, L, dir);
 
       geometryTerm = (h.normal.dotProduct(L) * lightNormal.dotProduct(L)) /
                      (distancePointLight * distancePointLight);
@@ -439,7 +440,7 @@ Color StochasticRayTracer::indirectLighting(std::shared_ptr<Scene> s,
   int lightIndex;
   Point3D lightPoint;
   bool lightVisible;
-  Vector3D L, lightNormal;
+  Vector3D L;
   std::shared_ptr<Light> selectedLight;
   real distancePointLight;
 
@@ -495,12 +496,6 @@ Color StochasticRayTracer::indirectLighting(std::shared_ptr<Scene> s,
         // Light point selection
         selectedLight = s->getLight(lightIndex);
         lightPoint = selectedLight->getSamplePoint();
-        lightNormal = selectedLight->getNormal();
-
-        // Ray from hitpoint to light point
-        L = lightPoint.substract((*hPsi).hitPoint);
-        distancePointLight = L.length();
-        L.normalize();
 
         // Check if we can see the light point from the hitpoint
         lightVisible = s->mutuallyVisible(hPsi->hitPoint, lightPoint);
@@ -509,7 +504,13 @@ Color StochasticRayTracer::indirectLighting(std::shared_ptr<Scene> s,
         if (lightVisible)
         {
           mat = h.object->getMaterial();
-          brdf = this->BRDF(mat, h.normal, L, radianceDirection);
+
+          // Ray from hitpoint to light point
+          L = lightPoint.substract((*hPsi).hitPoint);
+          distancePointLight = L.length();
+          L.normalize();
+
+          brdf = this->BRDF(mat, h.normal, selectedLight, L, radianceDirection);
           factor = h.normal.dotProduct(psi) / (2 * PI_RAYOS);
           radiance += radIndirectRay * brdf * factor;
         }

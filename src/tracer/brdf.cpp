@@ -3,14 +3,13 @@
 // Bui T. Phong BRDF                                      
 Color PhongBRDF(Material mat, 
                 Vector3D N, 
+                std::shared_ptr<Light> light,
                 Vector3D L, 
                 Vector3D V)
 {
     Vector3D R, aux;
 	  real ka, kd, ks;
-	  Color colorLight;
     Color colorMat;
-    real intensityLight;
 	  double NL, RV;
 	  Color radiance;
 
@@ -20,10 +19,7 @@ Color PhongBRDF(Material mat,
     ks = mat.getKs();
 
     colorMat = mat.getColor();
-
-    colorLight = Color(1.0, 1.0, 1.0);
-    intensityLight = 1.0f;   
-
+    
 	  // Vector for diffuse component
     NL = N.dotProduct(L);
     
@@ -45,7 +41,10 @@ Color PhongBRDF(Material mat,
                      (colorLight.getG() * intensityLight * colorMat.getG()) * (kd * NL + ks * RV),
                      (colorLight.getB() * intensityLight * colorMat.getB()) * (kd * NL + ks * RV));
     */
-    radiance = colorLight * intensityLight * colorMat * (kd * NL + ks * RV);
+    radiance = light->getColor() * 
+               light->getIntensity() * 
+               colorMat * 
+               (kd * NL + ks * RV);
 
 	  return(radiance);
 }
@@ -53,6 +52,7 @@ Color PhongBRDF(Material mat,
 // Jim Blinn BRDF                                         
 Color BlinnBRDF(Material mat, 
                 Vector3D N, 
+                std::shared_ptr<Light> light,
                 Vector3D L, 
                 Vector3D V)
 {

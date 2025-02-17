@@ -45,6 +45,7 @@ class Tracer
 	// Pointer to function calculating the BRDF
 	Color (*BRDF)(Material m, 
                 Vector3D N, 
+                std::shared_ptr<Light> light,
                 Vector3D L, 
                 Vector3D V);
 	// Pointer to random number generator

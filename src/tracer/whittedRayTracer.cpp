@@ -90,7 +90,7 @@ Color WhittedRayTracer::traceRay(const Ray& r, std::shared_ptr<Scene> s)
             V = s->getCamera().getLocation().substract(hitPoint);
             V.normalize();
 
-            radiance = this->BRDF(s->getObject(nearest)->getMaterial(), *N[nearest], L, V);	  
+            radiance = this->BRDF(s->getObject(nearest)->getMaterial(), *N[nearest], light1, L, V);	  
         }
 	}
 	else
