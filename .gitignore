@@ -39,6 +39,7 @@ bin/
 build/
 callgrind/
 output/
+profiling/
 pbrt/
 
 callgrind*
