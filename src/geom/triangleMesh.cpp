@@ -79,11 +79,11 @@ TriangleMesh::TriangleMesh(std::vector<Point3D> vertices,
     }
 }
 
-TriangleMesh::TriangleMesh(const std::shared_ptr<TriangleMesh>& mesh, const Material& mat)
+TriangleMesh::TriangleMesh(const TriangleMesh& mesh, const Material& mat)
 {
-    this->vertices = mesh->vertices;
-    this->vertexIndexes = mesh->vertexIndexes;
-    this->numberTriangles = mesh->numberTriangles;
+    this->vertices = mesh.vertices;
+    this->vertexIndexes = mesh.vertexIndexes;
+    this->numberTriangles = mesh.numberTriangles;
     this->material = mat;
     this->type = TRIANGLE_MESH;
 
@@ -104,7 +104,7 @@ TriangleMesh::TriangleMesh(const std::shared_ptr<TriangleMesh>& mesh, const Mate
 }
 
 // Returns a random point from a random triangle in the mesh
-Point3D TriangleMesh::getSamplePoint()
+const Point3D& TriangleMesh::getSamplePoint() const
 {
     // Select a random triangle
     int triangleIndex = getRandomNumberMT(0, this->triangles.size() - 1);
@@ -126,12 +126,10 @@ Point3D TriangleMesh::getSamplePoint()
     }
 
     // Compute the sample point using barycentric coordinates
-    Point3D samplePoint = A * (1.0f - u - v) + B * u + C * v;
-
-    return samplePoint;
+    return A * (1.0f - u - v) + B * u + C * v;
 }
 
-Triangle TriangleMesh::getTriangle(int index)
+const Triangle& TriangleMesh::getTriangle(int index) const
 {
     return this->triangles[index];
 }
@@ -146,53 +144,23 @@ real TriangleMesh::intersect(const Ray& r,
                              real tMin, 
                              real tMax) const
 {
-    // Triangle tri;
-    // int triIndex;
-    // real t;
-    // real tNear;
-    // Vector3D auxNormal;
-
-    // int j = 0;
-    // tNear = std::numeric_limits<float>::infinity();
-    // for (int i = 0; i < this->numberTriangles; i++)
-    // {
-    //     tri = Triangle(this->vertices[this->vertexIndexes[j]],
-    //                    this->vertices[this->vertexIndexes[j+1]],
-    //                    this->vertices[this->vertexIndexes[j+2]],
-    //                    this->material);
-
-    //     t = tri.intersect(r, auxNormal);
-    //     if ((t > 0) && (t < tNear))
-    //     {
-    //         tNear = t;
-    //         normal = auxNormal;
-    //         triIndex = i;
-    //     }
-
-    //     j += 3;
-    // }
-
-	//   return(tNear);
-
-    float tNear;
+    float tNear = tMax;
     Vector3D auxNormal;
 
     tNear = tMax;
-    for (Triangle tri : this->triangles) 
+    // Use a const reference to avoid copying
+    for (const Triangle& tri : this->triangles) 
     {
         real t = tri.intersect(r, auxNormal, 0.001f, tNear);
 
-        if (t) 
+        if ((t > tMin) && (t < tNear))
         {
-            if ((t > tMin) && (t < tNear))
-            {
-                tNear = t;
-                normal = auxNormal;
-            }
+            tNear = t;
+            normal = auxNormal;
         }
     }
 
-	return(tNear);
+	return tNear;
 }
 
 // Adapted from code from Scratch a Pixel

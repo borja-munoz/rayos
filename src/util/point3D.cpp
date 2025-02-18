@@ -52,12 +52,38 @@ Point3D Point3D::operator+(Point3D otherPoint) const {
     );
 }
 
+// Const operator+ that returns a new Point3D
+Point3D Point3D::operator+(Vector3D vec) const {
+  return Point3D(
+      x + vec.x, 
+      y + vec.y, 
+      z + vec.z
+  );
+}
+
 // Non-const operator+ that returns a new Point3D
 Point3D& Point3D::operator+=(Point3D otherPoint) {
     x += otherPoint.x;
     y += otherPoint.y;
     z += otherPoint.z;
     return *this;
+}
+
+// Non-const operator+ that returns a new Point3D
+Point3D& Point3D::operator+=(Vector3D vec) {
+  x += vec.x;
+  y += vec.y;
+  z += vec.z;
+  return *this;
+}
+
+// Const operator+ that returns a new Point3D
+Vector3D Point3D::operator-(Point3D otherPoint) const {
+  return Vector3D(
+      x - otherPoint.x, 
+      y - otherPoint.y, 
+      z - otherPoint.z
+  );
 }
 
 // Const operator* that returns a new Point3D

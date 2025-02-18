@@ -16,7 +16,7 @@ class Light
   public: 
 	Light();
 	Light(Color color, real intensity);
-	Color getColor(void) const;
+	const Color& getColor(void) const;
 	real getIntensity(void) const;
 	void setColor(Color color);
 	void setIntensity(real intensity);

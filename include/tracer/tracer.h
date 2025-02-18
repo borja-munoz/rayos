@@ -43,11 +43,11 @@ class Tracer
 {
   protected:
 	// Pointer to function calculating the BRDF
-	Color (*BRDF)(Material m, 
-                Vector3D N, 
-                std::shared_ptr<Light> light,
-                Vector3D L, 
-                Vector3D V);
+	Color (*BRDF)(const Material& m, 
+                const Vector3D& N, 
+                const Light& light,
+                const Vector3D& L, 
+                const Vector3D& V);
 	// Pointer to random number generator
 	real (*getRandomNumber)(real x, real y);
 	std::optional<HitPoint> getHitPoint(const Ray& r, std::shared_ptr<Scene> s);

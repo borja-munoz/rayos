@@ -1,60 +1,49 @@
 #include "brdf.h"
 
 // Bui T. Phong BRDF                                      
-Color PhongBRDF(Material mat, 
-                Vector3D N, 
-                std::shared_ptr<Light> light,
-                Vector3D L, 
-                Vector3D V)
+Color PhongBRDF(const Material& mat, 
+                const Vector3D& N, 
+                const Light& light,
+                const Vector3D& L, 
+                const Vector3D& V)
 {
-    Vector3D R, aux;
-	  real ka, kd, ks;
-    Color colorMat;
-	  double NL, RV;
-	  Color radiance;
-
     // Ambient, diffuse and specular components
-    ka = mat.getKa();
-    kd = mat.getKd();
-    ks = mat.getKs();
+    real ka = mat.getKa();
+    real kd = mat.getKd();
+    real ks = mat.getKs();
 
-    colorMat = mat.getColor();
+    // Use reference to avoid deep copy
+    const Color &colorMat = mat.getColor();
     
-	  // Vector for diffuse component
-    NL = N.dotProduct(L);
-    
-    // Vectors for specular component
-    aux = N.product(2 * NL);
-    R = aux.substract(L);    
-    RV = R.dotProduct(V);
-    if (RV < 0.0)
-		RV = 0.0;
-    else
-        RV = (real) pow(RV, 0.5);     // RV^0.5
+	  // Calculate diffuse component
+    real NL = N.dotProduct(L);
+    if (NL < 0.0) 
+      NL = 0.0;
+
+    // Calculate specular component
+    Vector3D R = (N * (2 * NL)) - L;   // Inline computation
+    real RV = R.dotProduct(V);
+    if (RV < 0.0) 
+      RV = 0.0;
+    else 
+      RV = static_cast<real>(pow(RV, 0.5)); // Avoid extra copy
 
     if (NL < 0.0)
-        NL = 0.0;
+      NL = 0.0;
 
-    // We calculate the final color taking into account both diffuse and specular components
-    /*
-    radiance = Color((colorLight.getR() * intensityLight * colorMat.getR()) * (kd * NL + ks * RV),
-                     (colorLight.getG() * intensityLight * colorMat.getG()) * (kd * NL + ks * RV),
-                     (colorLight.getB() * intensityLight * colorMat.getB()) * (kd * NL + ks * RV));
-    */
-    radiance = light->getColor() * 
-               light->getIntensity() * 
-               colorMat * 
-               (kd * NL + ks * RV);
-
-	  return(radiance);
+    // Calculate the final color with the diffuse and specular components
+    return light.getColor() * 
+           light.getIntensity() * 
+           colorMat * 
+           (kd * NL + ks * RV);
 }
 
 // Jim Blinn BRDF                                         
-Color BlinnBRDF(Material mat, 
-                Vector3D N, 
-                std::shared_ptr<Light> light,
-                Vector3D L, 
-                Vector3D V)
+Color BlinnBRDF(const Material& mat, 
+                const Vector3D& N, 
+                const Light& light,
+                const Vector3D& L, 
+                const Vector3D& V)
 {
     Color radiance;
 

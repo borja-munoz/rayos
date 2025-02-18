@@ -12,7 +12,7 @@ Scene::Scene()
 void Scene::createCornellBox()
 {
   Point3D a, b, c, d;
-  std::shared_ptr<Quad> lightObject;
+  std::shared_ptr<TriangleMesh> lightObject;
 
   this->camera = Camera();
 
@@ -31,11 +31,13 @@ void Scene::createCornellBox()
   Material mat = Material();
   mat.set(Color(1.0, 1.0, 1.0),
            1.0, 1.0, 0.0, 1.0);
-  lightObject = std::make_shared<Quad>(a, b, c, d, mat); // Defaults to white color
+  // lightObject = std::make_shared<Quad>(a, b, c, d, mat); // Defaults to white color
+  // ToDo: define vertices and indexes for the light object
+  lightObject = std::make_shared<TriangleMesh>();
 
   // Light source
   std::shared_ptr<RectLight> lightTecho = std::make_shared<RectLight>();
-  lightTecho->setLocation(lightObject);
+  lightTecho->setLocation(*lightObject);
   this->lights.push_back(lightTecho);
 
   // Objects (including lights)
@@ -262,10 +264,6 @@ Scene::Scene(const std::string filename)
         // Check if the light is a RectLight
         if (std::shared_ptr<RectLight> rectLight = std::dynamic_pointer_cast<RectLight>(light))
         {
-            // Use the existing TriangleMesh that defines the light's geometry
-            std::shared_ptr<TriangleMesh> lightMesh = 
-              std::dynamic_pointer_cast<TriangleMesh>(rectLight->getLocation());
-
             // Create an emissive material using the light's color
             Material emissiveMaterial = Material(
                 rectLight->getColor(),  // Emission color
@@ -275,9 +273,13 @@ Scene::Scene(const std::string filename)
                 1.0f                    // ke (emission factor, making it a glowing object)
             );
 
+            // Use the existing TriangleMesh that defines the light's geometry
+
             // Create an object using the TriangleMesh and emissive material
             std::shared_ptr<TriangleMesh> lightObject = 
-              std::make_shared<TriangleMesh>(lightMesh, emissiveMaterial);
+              std::make_shared<TriangleMesh>(
+                rectLight->getLocation(), 
+                emissiveMaterial);
 
             // Add the light mesh to the scene objects so it gets rendered
             objects.push_back(lightObject);
@@ -293,15 +295,18 @@ Scene::Scene(const std::string filename)
     camera = parsedScene->camera;
 }
 
-void Scene::addLight(const std::shared_ptr<Light>& light) {
+void Scene::addLight(const std::shared_ptr<Light>& light) 
+{
     this->lights.push_back(light);
 }
 
-void Scene::addObject(const std::shared_ptr<Primitive>& object) {
+void Scene::addObject(const std::shared_ptr<Primitive>& object) 
+{
     this->objects.push_back(object);
 }
 
-void Scene::setCamera(const Camera& cam) {
+void Scene::setCamera(const Camera& cam) 
+{
     camera = cam;
 }
 
@@ -352,12 +357,12 @@ void Scene::setCamera(const Camera& cam) {
 // }
 
 
-unsigned int Scene::getNumberObjects(void)
+unsigned int Scene::getNumberObjects(void) const
 {
   return (this->objects.size());
 }
 
-std::shared_ptr<Primitive> Scene::getObject(unsigned int objectIndex)
+std::shared_ptr<Primitive> Scene::getObject(unsigned int objectIndex) const
 {
   if ((objectIndex >= 0) && (objectIndex < this->objects.size()))
     return (this->objects[objectIndex]);
@@ -365,12 +370,12 @@ std::shared_ptr<Primitive> Scene::getObject(unsigned int objectIndex)
   return (0);
 }
 
-unsigned int Scene::getNumberLights(void)
+unsigned int Scene::getNumberLights(void) const
 {
   return (this->lights.size());
 }
 
-std::shared_ptr<Light> Scene::getLight(unsigned int lightIndex)
+std::shared_ptr<Light> Scene::getLight(unsigned int lightIndex) const
 {
   if ((lightIndex >= 0) && (lightIndex < this->objects.size()))
     return (this->lights[lightIndex]);
@@ -383,7 +388,7 @@ Camera Scene::getCamera(void) const
   return (this->camera);
 }
 
-bool Scene::mutuallyVisible(Point3D p, Point3D q)
+bool Scene::mutuallyVisible(Point3D p, Point3D q) const
 {
   unsigned int numberObjects;
   real distance, intersection;

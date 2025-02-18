@@ -13,16 +13,14 @@
 
 class RectLight : public Light
 {
-	std::shared_ptr<Primitive> location;
-	Point3D getSamplePointQuad(void) const;
-	Point3D getSamplePointMesh(void) const;
+	TriangleMesh location;
 
   public:
  
 	RectLight();
-	RectLight(std::shared_ptr<Primitive> location, Color color, real intensity);
-	std::shared_ptr<Primitive> getLocation(void);
-	void setLocation(std::shared_ptr<Primitive> c);
+	RectLight(TriangleMesh& location, Color color, real intensity);
+	const TriangleMesh& getLocation(void) const;
+	void setLocation(TriangleMesh& location);
 	real getArea(void) const;
 	Vector3D getNormal(void) const;
 	Point3D getSamplePoint(void) const;

@@ -1,26 +1,26 @@
 #include "material.h"
 
-Color Material::getColor(void)
+const Color& Material::getColor(void) const
 {
-    return(kdColor);
+    return(this->kdColor);
 }
 
-real Material::getKa(void)
+real Material::getKa(void) const
 {
     return(this->ka);
 }
 
-real Material::getKd(void)
+real Material::getKd(void) const
 {
     return(this->kd);
 }
 
-real Material::getKs(void)
+real Material::getKs(void) const
 {
     return(this->ks);
 }
 
-real Material::getKe(void)
+real Material::getKe(void) const
 {
     return(this->ke);
 }

@@ -83,6 +83,18 @@ class Vector3D
         }
     }
 
+    Vector3D operator-(const Vector3D otherVector) const {
+        return { 
+            x - otherVector.x, 
+            y * otherVector.y, 
+            z * otherVector.z 
+        };
+    }
+
+    Vector3D operator*(real scalar) const {
+        return { x * scalar, y * scalar, z * scalar };
+    }
+
     inline real dotProduct(const Vector3D& v) const
     {
         return(this->x * v.x + this->y * v.y + this->z * v.z);

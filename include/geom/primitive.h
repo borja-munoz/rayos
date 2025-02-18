@@ -32,8 +32,8 @@ class Primitive
 	Primitive();
 	Primitive(Material mat) 
 		: material(mat) {};
-	Material getMaterial(void);
-	ObjectType getType(void);
+	const Material& getMaterial(void) const;
+	ObjectType getType(void) const;
 	virtual real intersect(const Ray& r, Vector3D& normal, real tMin, real tMax) const = 0;
 	virtual AABB boundingBox() const = 0;
 };

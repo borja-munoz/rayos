@@ -5,12 +5,12 @@ Primitive::Primitive()
 
 }
 
-Material Primitive::getMaterial(void)
+const Material& Primitive::getMaterial(void) const
 {
     return(this->material);
 }
 
-ObjectType Primitive::getType(void)
+ObjectType Primitive::getType(void) const
 {
     return(this->type);
 }

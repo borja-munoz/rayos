@@ -257,62 +257,17 @@ Color StochasticRayTracer::calculateRadiance(HitPoint h,
 
   emittedRadiance = this->emittedRadiance(s, h);
 
-  // Chrono *c1 = new Chrono();
-  // c1->start();
   directLighting = this->directLighting(s, h, probLight, dir);
-  // c1->stop();
-  // this->timeStats.timeDirectLighting += c1->value() * 1000;
-  //cout << "directLighting = " << c1->value() * 1000 << " milliseconds\n";
 
-  // Chrono *c2 = new Chrono();
-  // c2->start();
   indirectLighting = this->indirectLighting(s, h, probLight);
-  // c2->stop();
-  // this->timeStats.timeIndirectLighting += c2->value() * 1000;
-  // cout << "indirectLighting elapsed time = " << c2->value() * 1000 << " milliseconds\n";
 
   reflectedRadiance = directLighting + indirectLighting;
-  // reflectedRadiance = directLighting;
-  // reflectedRadiance = directLighting + Color(0.5, 0.2, 0.2);
   // reflectedRadiance = this->indirectLightHeatmap(indirectLighting * 10.0);
-
-  // if (indirectLighting.getR() > 0.0 || 
-  //     indirectLighting.getG() > 0.0 || 
-  //     indirectLighting.getB() > 0.0)
-  // {
-  //    cout << "Indirect Lighting = " << indirectLighting << "\n";
-  // } 
 
   radiance = emittedRadiance + reflectedRadiance;
 
   return (radiance);
 }
-
-// Method to render a heatmap of the indirect light
-Color StochasticRayTracer::indirectLightHeatmap(Color indirect)
-{
-    // Get intensity from indirect radiance
-    real intensity = (indirect.getR() + indirect.getG() + indirect.getB()) / 3.0;
-
-    // Normalize intensity (clamp to [0, 1] for display)
-    intensity = std::min(1.0, std::max(0.0, intensity));
-
-    // Simple heatmap: blue → green → yellow → red
-    if (intensity < 0.25) {
-        // 0.00 to 0.25: Blue to Cyan
-        return Color(0, intensity * 4, 1);
-    } else if (intensity < 0.5) {
-        // 0.25 to 0.50: Cyan to Green
-        return Color(0, 1, 1 - (intensity - 0.25) * 4);
-    } else if (intensity < 0.75) {
-        // 0.50 to 0.75: Green to Yellow
-        return Color((intensity - 0.5) * 4, 1, 0);
-    } else {
-        // 0.75 to 1.00: Yellow to Red
-        return Color(1, 1 - (intensity - 0.75) * 4, 0);
-    }
-}
-
 
 // Calculates emitted radiance
 Color StochasticRayTracer::emittedRadiance(std::shared_ptr<Scene> s,
@@ -320,13 +275,10 @@ Color StochasticRayTracer::emittedRadiance(std::shared_ptr<Scene> s,
 {
   Color radiance;
   real ke;
-  Material mat;
-  Color matColor;
 
-  std::shared_ptr<Primitive> object = h.object;
-  mat = object->getMaterial();
+  const Material &mat = h.object->getMaterial();
   ke = mat.getKe();
-  matColor = mat.getColor();
+  const Color &matColor = mat.getColor();
   if (ke > 0)
   {
     radiance = matColor * ke;
@@ -356,60 +308,47 @@ Color StochasticRayTracer::directLighting(std::shared_ptr<Scene> s,
   // the light source and the point within the light source. It is the simplest one
   // and gives the worst results.
 
-  Color radiance, rad;
+  Color radiance(0, 0, 0);
+  Color rad;
   int lightIndex;
   Point3D lightPoint;
   real distancePointLight, geometryTerm;
   bool lightVisible;
   Vector3D L, lightNormal;
-  Material mat;
   std::shared_ptr<Light> selectedLight;
 
-  radiance = Color(0, 0, 0);
+  // Use raw pointer or reference to avoid shared_ptr overhead
+  const Scene &scene = *s;
+  
   for (unsigned int i = 0; i < this->shadowRays; i++)
   {
     this->shadowRaysTraced.fetch_add(1);
 
     // Light source selection
-    lightIndex = (int)getRandomIntMT(0, s->getNumberLights() - 1);
+    lightIndex = (int)getRandomIntMT(0, scene.getNumberLights() - 1);
 
     // Light point selection
-    selectedLight = s->getLight(lightIndex);
-    lightPoint = selectedLight->getSamplePoint();
+    const Light &selectedLight = *scene.getLight(lightIndex);
+    lightPoint = selectedLight.getSamplePoint();
 
     // Check if we can see the light point from the hitpoint
-    // Chrono *c = new Chrono();
-    // c->start();
-    // lightVisible = s->mutuallyVisible(h->hitPoint, lightPoint);
     // Avoid shadow acne by displacing the hitpoint a bit in the direction of the normal
-    lightVisible = s->mutuallyVisible(
-      h.hitPoint.sum(h.normal.product(1e-4)), 
+    lightVisible = scene.mutuallyVisible(
+      h.hitPoint + h.normal * 1e-4, 
       lightPoint
     );
-
-    // lightVisible = true;
-    // c->stop();
-    // this->timeStats.timeMutuallyVisible += c->value() * 1000;
-    // cout << "mutuallyVisible elapsed time = " << c->value() * 1000 << " milliseconds\n";
 
     // If it is visible, we calculate reflected radiance from the light source
     if (lightVisible)
     {
-      // - Each object must have an ID
-      // - Light sources will be added to the scene always before the other objects,
-      //   to have the lower IDs
-      // - We will know if the nearest object is a light source by comparing the
-      //   object ID with the number of light sources in the scene
-
       // Ray from hitpoint to light point
-      L = lightPoint.substract(h.hitPoint);
+      L = lightPoint - h.hitPoint;
       distancePointLight = L.length();
       L.normalize();
 
-      lightNormal = selectedLight->getNormal();
+      lightNormal = selectedLight.getNormal();
 
-      // object = e->getObject(nearestObject);
-      mat = h.object->getMaterial();
+      const Material &mat = h.object->getMaterial();
       rad = this->BRDF(mat, h.normal, selectedLight, L, dir);
 
       geometryTerm = (h.normal.dotProduct(L) * lightNormal.dotProduct(L)) /
@@ -441,7 +380,6 @@ Color StochasticRayTracer::indirectLighting(std::shared_ptr<Scene> s,
   Point3D lightPoint;
   bool lightVisible;
   Vector3D L;
-  std::shared_ptr<Light> selectedLight;
   real distancePointLight;
 
   // Initialize
@@ -494,8 +432,8 @@ Color StochasticRayTracer::indirectLighting(std::shared_ptr<Scene> s,
         lightIndex = (int)getRandomIntMT(0, s->getNumberLights() - 1);
 
         // Light point selection
-        selectedLight = s->getLight(lightIndex);
-        lightPoint = selectedLight->getSamplePoint();
+        const Light &selectedLight = *s->getLight(lightIndex);
+        lightPoint = selectedLight.getSamplePoint();
 
         // Check if we can see the light point from the hitpoint
         lightVisible = s->mutuallyVisible(hPsi->hitPoint, lightPoint);
@@ -549,4 +487,29 @@ Vector3D StochasticRayTracer::getRandomDirection(void)
   dir = Vector3D(x, y, z);
 
   return (dir);
+}
+
+// Method to render a heatmap of the indirect light
+Color StochasticRayTracer::indirectLightHeatmap(Color indirect)
+{
+    // Get intensity from indirect radiance
+    real intensity = (indirect.getR() + indirect.getG() + indirect.getB()) / 3.0;
+
+    // Normalize intensity (clamp to [0, 1] for display)
+    intensity = std::min(1.0, std::max(0.0, intensity));
+
+    // Simple heatmap: blue → green → yellow → red
+    if (intensity < 0.25) {
+        // 0.00 to 0.25: Blue to Cyan
+        return Color(0, intensity * 4, 1);
+    } else if (intensity < 0.5) {
+        // 0.25 to 0.50: Cyan to Green
+        return Color(0, 1, 1 - (intensity - 0.25) * 4);
+    } else if (intensity < 0.75) {
+        // 0.50 to 0.75: Green to Yellow
+        return Color((intensity - 0.5) * 4, 1, 0);
+    } else {
+        // 0.75 to 1.00: Yellow to Red
+        return Color(1, 1 - (intensity - 0.75) * 4, 0);
+    }
 }

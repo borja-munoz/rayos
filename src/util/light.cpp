@@ -12,7 +12,7 @@ Light::Light(Color color, real intensity)
 	this->intensity = intensity;
 }
 
-Color Light::getColor(void) const
+const Color& Light::getColor(void) const
 {
 	return(this->color);
 }

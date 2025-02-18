@@ -16,7 +16,8 @@ class Triangle : public Primitive
 	Point3D vertex[3];
 	Vector3D normal;              // Plane containing
 	real distance;                // the triangle
-  
+	Vector3D edge1, edge2;        // Precomputed edges
+
   public:
 	Triangle();
 	Triangle(Point3D x, 

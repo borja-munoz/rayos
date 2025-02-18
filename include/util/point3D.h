@@ -30,7 +30,10 @@ class Point3D
     real operator[](size_t index) const;
     real& operator[](size_t index);
 	Point3D operator+(Point3D otherPoint) const;
+	Point3D operator+(Vector3D vec) const;
 	Point3D& operator+=(Point3D otherPoint);
+	Point3D& operator+=(Vector3D vec);
+	Vector3D operator-(Point3D otherPoint) const;
 	Point3D operator*(real scalar) const;
 	Point3D& operator*=(real scalar);
 	Point3D sum(const Vector3D& v) const;

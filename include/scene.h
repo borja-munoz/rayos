@@ -54,18 +54,18 @@ class Scene
 	  Scene();
     Scene(const std::string);
 
-	  unsigned int getNumberObjects(void);
-	  std::shared_ptr<Primitive> getObject(unsigned int objectIndex);
+	  unsigned int getNumberObjects(void) const;
+	  std::shared_ptr<Primitive> getObject(unsigned int objectIndex) const;
     void addObject(const std::shared_ptr<Primitive>& object);
 
-	  unsigned int getNumberLights(void);
-	  std::shared_ptr<Light> getLight(unsigned int lightIndex);
+	  unsigned int getNumberLights(void) const;
+	  std::shared_ptr<Light> getLight(unsigned int lightIndex) const;
     void addLight(const std::shared_ptr<Light>& light);
 
 	  Camera getCamera(void) const; 
     void setCamera(const Camera& camera);
 
-	  bool mutuallyVisible(Point3D p, Point3D q);
+	  bool mutuallyVisible(Point3D p, Point3D q) const;
 
     void buildBVH();
     std::optional<HitPoint> intersect(const Ray& ray, real tMin, real tMax) const;

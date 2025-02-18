@@ -240,7 +240,11 @@ std::shared_ptr<RectLight> PBRTParser::parseAreaLight(
         }
     }
 
-    return std::make_shared<RectLight>(shape, lightColor, 1.0);
+    return std::make_shared<RectLight>(
+        *std::dynamic_pointer_cast<TriangleMesh>(shape).get(), 
+        lightColor, 
+        1.0
+    );
 }
 
 std::shared_ptr<Primitive> PBRTParser::parseShape(

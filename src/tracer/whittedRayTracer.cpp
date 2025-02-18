@@ -45,13 +45,12 @@ Color WhittedRayTracer::traceRay(const Ray& r, std::shared_ptr<Scene> s)
 	int numberObjects, i, j;
 	Point3D hitPoint;
 	std::vector<real> intersection;
-	std::shared_ptr<Light> light1;
 	Vector3D L, V;
 	std::shared_ptr<Primitive> object;
 	  
 	numberObjects = s->getNumberObjects();
 	std::shared_ptr<Vector3D> N[numberObjects];
-	light1 = s->getLight(0);
+	const Light& light1 = *s->getLight(0);
 	for (i = 0; i < numberObjects; i++)
 	{
 		N[i] = std::make_shared<Vector3D>();    
@@ -83,7 +82,7 @@ Color WhittedRayTracer::traceRay(const Ray& r, std::shared_ptr<Scene> s)
 		else
         {
             // Vector to light source
-            L = light1->getSamplePoint().substract(hitPoint);
+            L = light1.getSamplePoint().substract(hitPoint);
             L.normalize();
 
             // Vector to viewer
