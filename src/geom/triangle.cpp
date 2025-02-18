@@ -69,7 +69,7 @@ real Triangle::intersect(const Ray& ray, Vector3D& normal, real tMin, real tMax)
     real a = edge1.dotProduct(h); // a = edge1 · h
 
     // Check if the ray is parallel to the triangle
-    if (fabsf(a) < tMin)
+    if (fabs(a) < tMin)
         return 0; // No intersection
 
     real f = 1.0f / a; // Inverse of determinant
