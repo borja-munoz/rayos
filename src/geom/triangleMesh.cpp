@@ -104,7 +104,7 @@ TriangleMesh::TriangleMesh(const TriangleMesh& mesh, const Material& mat)
 }
 
 // Returns a random point from a random triangle in the mesh
-const Point3D& TriangleMesh::getSamplePoint() const
+const Point3D TriangleMesh::getSamplePoint() const
 {
     // Select a random triangle
     int triangleIndex = getRandomNumber(0, this->triangles.size() - 1);
