@@ -90,7 +90,7 @@ void printProgressBar(double progress, double elapsedTime, double remainingTime,
               << ", Shadow: " << shadowRays 
               << ", Indirect: " << indirectRays 
               << ") | " << YELLOW << std::fixed << std::setprecision(2) << raysPerSec << " MRays/s" << RESET
-              << "          "  // Extra spaces clear lingering text
+              << "  "  // Extra spaces clear lingering text
               << std::flush; // Force immediate update
 }
 
