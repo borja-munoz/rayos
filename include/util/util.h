@@ -5,8 +5,9 @@
 #include <iomanip>
 #include <iostream>
 #include <math.h>
+#include <random>
 #include <string>
-
+#include <thread>
 
 //-------------------------------------------------------------------
 // Numeric precision
@@ -36,6 +37,14 @@ real getRandomNumberMT(real x, real y);
 unsigned long getRandomIntMT(int x, int y);
 real getRandomNumberSSE(real x, real y);
 
+// Thread-local random engine
+static thread_local std::mt19937 rng(std::random_device{}());
+
+// Inline function to remove function call overhead
+inline real getRandomNumber(real x, real y) {
+    static thread_local std::uniform_real_distribution<real> dist(0.0, 1.0);
+    return x + (y - x) * dist(rng);
+}
 
 //-------------------------------------------------------------------
 // Macros

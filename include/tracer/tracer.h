@@ -49,7 +49,6 @@ class Tracer
                 const Vector3D& L, 
                 const Vector3D& V);
 	// Pointer to random number generator
-	real (*getRandomNumber)(real x, real y);
 	std::optional<HitPoint> getHitPoint(const Ray& r, std::shared_ptr<Scene> s);
 
   protected:

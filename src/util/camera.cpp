@@ -134,8 +134,8 @@ vector<Ray> Camera::getSampleEyeRays(real x, real y, unsigned int sampleRays)
 
 			// Jitter variable contains a value within each of the regions
             // that form the pixel (the pixel is divided in as many regions as sampleRays)
-			jitterX = getRandomNumberMT(i / sampleRaysDiv2, (i + 1) / sampleRaysDiv2);
-			jitterY = getRandomNumberMT(j / sampleRaysDiv2, (j + 1) / sampleRaysDiv2);
+			jitterX = getRandomNumber(i / sampleRaysDiv2, (i + 1) / sampleRaysDiv2);
+			jitterY = getRandomNumber(j / sampleRaysDiv2, (j + 1) / sampleRaysDiv2);
 
 			alfa = ((2 * (x + jitterX)) / this->xRes) - 1;
 			

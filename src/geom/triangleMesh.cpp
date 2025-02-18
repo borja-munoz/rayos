@@ -107,7 +107,7 @@ TriangleMesh::TriangleMesh(const TriangleMesh& mesh, const Material& mat)
 const Point3D& TriangleMesh::getSamplePoint() const
 {
     // Select a random triangle
-    int triangleIndex = getRandomNumberMT(0, this->triangles.size() - 1);
+    int triangleIndex = getRandomNumber(0, this->triangles.size() - 1);
     const Triangle& triangle = triangles[triangleIndex];
 
     // Get the vertices of the selected triangle
@@ -116,8 +116,8 @@ const Point3D& TriangleMesh::getSamplePoint() const
     const Point3D& C = triangle.getVertex(2);
 
     // Generate random barycentric coordinates
-    float u = getRandomNumberMT(0.0f, 1.0f);
-    float v = getRandomNumberMT(0.0f, 1.0f);
+    float u = getRandomNumber(0.0f, 1.0f);
+    float v = getRandomNumber(0.0f, 1.0f);
 
     // Ensure the point is inside the triangle
     if (u + v > 1.0f) {

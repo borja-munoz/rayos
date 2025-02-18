@@ -5,11 +5,6 @@
 Tracer::Tracer()
 {
 	this->BRDF = PhongBRDF;
-
-	//initGenSSE(12345678);
-	//this->getRandomNumber = getRandomNumberSSE;
-	initGenMT(12345678);
-	this->getRandomNumber = getRandomNumberMT;
 }
 
 Tracer::Tracer(BRDFtype t)
