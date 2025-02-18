@@ -68,5 +68,7 @@ inline real getRandomNumber(real x, real y) {
 void printProgressBar(double progress, double elapsedTime, double remainingTime, 
                       long long sampleRays, long long shadowRays, long long indirectRays,
                       double raysPerSec);
+std::string formatNumber(long long num);
+
 
 #endif

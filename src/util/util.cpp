@@ -86,11 +86,25 @@ void printProgressBar(double progress, double elapsedTime, double remainingTime,
     // Stats Line
     std::cout << "Elapsed: " << std::fixed << std::setprecision(1) << elapsedTime << "s | "
               << "Remaining: " << std::fixed << std::setprecision(1) << remainingTime << "s \n"
-              << "Rays (Sample: " << sampleRays 
-              << ", Shadow: " << shadowRays 
-              << ", Indirect: " << indirectRays 
+              << "Rays (Sample: " << formatNumber(sampleRays) 
+              << ", Shadow: " << formatNumber(shadowRays) 
+              << ", Indirect: " << formatNumber(indirectRays)
               << ") | " << YELLOW << std::fixed << std::setprecision(2) << raysPerSec << " MRays/s" << RESET
               << "  "  // Extra spaces clear lingering text
               << std::flush; // Force immediate update
 }
 
+std::string formatNumber(long long num) {
+    const char* suffixes[] = {"", "K", "M", "B", "T"};  // Thousand, Million, Billion, Trillion
+    int suffixIndex = 0;
+    double formattedNum = static_cast<double>(num);
+
+    while (formattedNum >= 1000.0 && suffixIndex < 4) {
+        formattedNum /= 1000.0;
+        suffixIndex++;
+    }
+
+    char buffer[10];
+    snprintf(buffer, sizeof(buffer), "%.1f%s", formattedNum, suffixes[suffixIndex]);
+    return std::string(buffer);
+}
