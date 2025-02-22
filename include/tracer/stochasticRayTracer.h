@@ -13,6 +13,8 @@
 
 using namespace std;
 
+const int MAX_DEPTH = 10;
+
 class StochasticRayTracer : public Tracer
 {
 	unsigned int sampleRays;                     // Number of rays per pixel
@@ -30,7 +32,8 @@ class StochasticRayTracer : public Tracer
 	Color calculateRadiance(HitPoint h, 
                           Vector3D dir, 
                           std::shared_ptr<Scene> s, 
-                          std::vector<real> probLight);
+                          std::vector<real> probLight,
+                          int depth);
 	Color emittedRadiance(std::shared_ptr<Scene> s, 
                         HitPoint h);
 	Color directLighting(std::shared_ptr<Scene> s, 
@@ -39,14 +42,20 @@ class StochasticRayTracer : public Tracer
                        Vector3D dir);
 	Color indirectLighting(std::shared_ptr<Scene> s, 
                          HitPoint h, 
-                         std::vector<real> probLight);
+                         std::vector<real> probLight,
+                         int depth);
 	Vector3D getRandomDirection(void);
-
+  Vector3D getCosineWeightedDirection(const Vector3D &normal);
+  Vector3D localToWorld(const Vector3D &N, const Vector3D &localDir);
+  
   Color indirectLightHeatmap(Color indirect);
 
   public:
 	StochasticRayTracer();
-	StochasticRayTracer(unsigned int sampleRays, unsigned int shadowRays, bool useBVH);
+	StochasticRayTracer(unsigned int sampleRays, 
+                      unsigned int shadowRays, 
+                      unsigned int indirectRays,
+                      bool useBVH);
 	StochasticRayTracer(BRDFtype t);
 	std::shared_ptr<Bitmap> trace(std::shared_ptr<Scene> s);
 };

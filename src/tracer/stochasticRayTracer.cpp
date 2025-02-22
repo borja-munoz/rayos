@@ -7,17 +7,18 @@ StochasticRayTracer::StochasticRayTracer()
 {
   sampleRays = 4;
   shadowRays = 4;
-  indirectRays = 4;
+  indirectRays = 16;
 }
 
 StochasticRayTracer::StochasticRayTracer(
   unsigned int sampleRays, 
   unsigned int shadowRays,
+  unsigned int indirectRays,
   bool useBVH)
 {
   this->sampleRays = sampleRays;
   this->shadowRays = shadowRays;
-  this->indirectRays = 4;
+  this->indirectRays = indirectRays;
   this->useBVH = useBVH;
 }
 
@@ -86,10 +87,10 @@ std::shared_ptr<Bitmap> StochasticRayTracer::trace(std::shared_ptr<Scene> s)
 // Increasing the tile size from 16x16 to 32x32 to reduce
 // thread synchronization overhead has not improved the
 // execution time either.
-#pragma omp parallel for \
-  shared(cam, s, viewer, probLight), \
-  private(eyeRay, eyeRays, rad, radiance) \
-  collapse(2)
+// #pragma omp parallel for \
+//   shared(cam, s, viewer, probLight) \
+//   private(eyeRay, eyeRays, rad, radiance) \
+//   collapse(2)
   // schedule(dynamic, 1)   
 
   for (int tileRow = 0; tileRow < tileRows; tileRow++) 
@@ -106,6 +107,8 @@ std::shared_ptr<Bitmap> StochasticRayTracer::trace(std::shared_ptr<Scene> s)
         {
           int pixelX = xTile + tileRow * tileSize;
           int pixelY = yTile + tileColumn * tileSize;
+
+          std::cout << "\n\nCalculating radiance for pixel: (" << pixelX << ", " << pixelY << "\n\n";
 
           // Chrono *c = new Chrono();
           // c->start();
@@ -129,6 +132,8 @@ std::shared_ptr<Bitmap> StochasticRayTracer::trace(std::shared_ptr<Scene> s)
               // _CrtMemState s1, s2, s3;
               // _CrtMemCheckpoint(&s1);
 
+              cout << "\n\nCalculating radiance for sample ray " << k << "\n\n";
+
               rad = traceRay(eyeRays[k], s, probLight, viewer);
 
               this->sampleRaysTraced.fetch_add(1); // Count each traced ray
@@ -146,6 +151,17 @@ std::shared_ptr<Bitmap> StochasticRayTracer::trace(std::shared_ptr<Scene> s)
 
           im->setHDRPixel(pixelY, pixelX, radiance);
 
+          printProgressBar(
+              0, 
+              0,
+              0,
+              sampleRaysTraced.load(),
+              shadowRaysTraced.load(),
+              indirectRaysTraced.load(),
+              0
+          );
+            
+          return(im);
           // c->stop();
           // this->timeStats.timePixel += c->value() * 1000;
           // cout << "Pixel elapsed time = " << c->value() * 1000 << " milliseconds\n";
@@ -204,26 +220,16 @@ Color StochasticRayTracer::traceRay(const Ray& r,
   // in the scene and calculate the nearest to the viewer.
   // Finally, we will evaluate a local BRDF in the hitpoint.
 
-  // Chrono *c1 = new Chrono();
-  // c1->start();
   auto h = this->getHitPoint(r, s);
-  // c1->stop();
-  // this->timeStats.timeGetHitPoint += c1->value() * 1000;
-  // cout << "\ngetHitPoint elapsed time = " << c1->value() * 1000 << " milliseconds\n";
 
   // If we have a hitpoint, we must calculate radiance emitted in the viewer direction
   if (h)
   {
     // Direction where we need to find the radiance
-    // Chrono *c2 = new Chrono();
-    // c2->start();
     radianceDirection = viewer.substract((*h).hitPoint);
     radianceDirection.normalize();
 
-    radiance = this->calculateRadiance(*h, radianceDirection, s, probLight);
-    // c2->stop();
-    // this->timeStats.timeCalculateRadiance += c2->value() * 1000;
-    // cout << "calculateRadiance elapsed time = " << c2->value() * 1000 << " milliseconds\n";
+    radiance = this->calculateRadiance(*h, radianceDirection, s, probLight, 0);
   }
   else
     radiance = Color(0, 0, 0);
@@ -239,7 +245,8 @@ Color StochasticRayTracer::traceRay(const Ray& r,
 Color StochasticRayTracer::calculateRadiance(HitPoint h,
                                              Vector3D dir,
                                              std::shared_ptr<Scene> s,
-                                             std::vector<real> probLight)
+                                             std::vector<real> probLight,
+                                             int depth)
 {
   // Radiance is composed of object emitted radiance (if the object is a light source)
   // plus object reflected radiance.
@@ -255,11 +262,16 @@ Color StochasticRayTracer::calculateRadiance(HitPoint h,
   Color directLighting;
   Color indirectLighting;
 
+  if (depth >= MAX_DEPTH) 
+  {
+    return Color(0, 0, 0); // Stop recursion
+  }
+
   emittedRadiance = this->emittedRadiance(s, h);
 
   directLighting = this->directLighting(s, h, probLight, dir);
 
-  indirectLighting = this->indirectLighting(s, h, probLight);
+  indirectLighting = this->indirectLighting(s, h, probLight, depth + 1);
 
   reflectedRadiance = directLighting + indirectLighting;
   // reflectedRadiance = this->indirectLightHeatmap(indirectLighting * 10.0);
@@ -324,8 +336,10 @@ Color StochasticRayTracer::directLighting(std::shared_ptr<Scene> s,
   {
     this->shadowRaysTraced.fetch_add(1);
 
+    cout << "Calculating radiance for shadow ray " << i << "\n\n";
+
     // Light source selection
-    lightIndex = (int)getRandomIntMT(0, scene.getNumberLights() - 1);
+    lightIndex = (int)getRandomInt(0, scene.getNumberLights() - 1);
 
     // Light point selection
     const Light &selectedLight = *scene.getLight(lightIndex);
@@ -369,7 +383,8 @@ Color StochasticRayTracer::directLighting(std::shared_ptr<Scene> s,
 // Indirect light in a given object point
 Color StochasticRayTracer::indirectLighting(std::shared_ptr<Scene> s,
                                             HitPoint h,
-                                            std::vector<real> probLight)
+                                            std::vector<real> probLight,
+                                            int depth)
 {
   Color radiance, radIndirectRay, brdf;
   real alfa, P, random, factor;
@@ -384,7 +399,6 @@ Color StochasticRayTracer::indirectLighting(std::shared_ptr<Scene> s,
 
   // Initialize
   alfa = (real)0.5; // Alfa is the material absortion probability
-  // alfa = (real)0.2; // Alfa is the material absortion probability
   P = 1 - alfa;
   r = Ray();
   r.origin = h.hitPoint;
@@ -400,13 +414,20 @@ Color StochasticRayTracer::indirectLighting(std::shared_ptr<Scene> s,
 
   if (random < P)
   {
+    std::cout << "Continuing recursion at depth: " << depth << std::endl;
     radiance = Color(0, 0, 0);
     for (unsigned int i = 0; i < this->indirectRays; i++)
     {
       this->indirectRaysTraced.fetch_add(1);
 
+      cout << "Calculating radiance for indirect ray " << i << "\n";
+
       // We obtain a random direction by uniformly sampling the hemisphere
-      psi = this->getRandomDirection();
+      // psi = this->getRandomDirection();
+
+      // Instead of uniform hemisphere sampling, 
+      // we can use cosine-weighted hemisphere sampling
+      psi = this->getCosineWeightedDirection(h.normal);
 
       // We calculate the point seen from the hitpoint in direction "psi"
       r.direction = psi;
@@ -419,7 +440,7 @@ Color StochasticRayTracer::indirectLighting(std::shared_ptr<Scene> s,
         radianceDirection = h.hitPoint.substract((*hPsi).hitPoint);
         radianceDirection.normalize();
 
-        radIndirectRay = this->calculateRadiance(*hPsi, radianceDirection, s, probLight);
+        radIndirectRay = this->calculateRadiance(*hPsi, radianceDirection, s, probLight, depth);
 
         // We should multiply radiance by the following factor:
         // BRDF(intersection) * cos(Nx, Psi) / pdf(Psi)
@@ -429,7 +450,7 @@ Color StochasticRayTracer::indirectLighting(std::shared_ptr<Scene> s,
         // function is 1 / (2 * Pi)
 
         // Light source selection
-        lightIndex = (int)getRandomIntMT(0, s->getNumberLights() - 1);
+        lightIndex = (int)getRandomInt(0, s->getNumberLights() - 1);
 
         // Light point selection
         const Light &selectedLight = *s->getLight(lightIndex);
@@ -457,12 +478,13 @@ Color StochasticRayTracer::indirectLighting(std::shared_ptr<Scene> s,
 
     radiance /= this->indirectRays;
 
-    radiance /= P;
+    // radiance /= P;
 
     // cout << radiance << '\n';
   }
   else {
     radiance = Color(0, 0, 0);
+    std::cout << "Russian Roulette terminated recursion at depth: " << depth << std::endl;
     //cout << "Stopping recursion\n";
   }
 
@@ -487,6 +509,101 @@ Vector3D StochasticRayTracer::getRandomDirection(void)
   dir = Vector3D(x, y, z);
 
   return (dir);
+}
+
+Vector3D StochasticRayTracer::getCosineWeightedDirection(const Vector3D &normal)
+{
+    real r1 = getRandomNumber(0, 1);
+    real r2 = getRandomNumber(0, 1);
+
+    real theta = acos(sqrt(1.0 - r1));  // Cosine-weighted
+    real phi = 2 * M_PI * r2;
+
+    // Convert spherical to cartesian
+    real x = cos(phi) * sin(theta);
+    real y = sin(phi) * sin(theta);
+    real z = cos(theta);
+
+    // Transform from local to world space
+    return localToWorld(normal, Vector3D(x, y, z));
+}
+
+Vector3D StochasticRayTracer::localToWorld(const Vector3D &N, const Vector3D &localDir) 
+{
+  Vector3D T, B, W;
+
+  // Create an orthonormal basis (Tangent, Bitangent, Normal)
+  
+  // Choose a safe perpendicular vector
+  if (fabs(N.x) > fabs(N.z)) 
+  {
+      T = Vector3D(-N.y, N.x, 0);  // Avoid (0,0,0)
+  } 
+  else 
+  {
+      T = Vector3D(0, -N.z, N.y);  // Alternate choice
+  }
+
+  if (ZERO(T.length())) 
+  {  // Failsafe
+      T = Vector3D(1, 0, 0);  // Default fallback
+  }
+  T.normalize();
+
+  // Compute the bitangent
+  B = N.crossProduct(T); 
+  B.normalize();  
+
+  // Transform the local direction to world space
+  // W = T * localDir.x + B * localDir.y + N * localDir.z;
+  W = T.product(localDir.x);
+  W = W.sum(B.product(localDir.y));
+  W = W.sum(N.product(localDir.z));
+  W.normalize();
+
+  // #pragma omp critical
+  // {
+  //   std::cout << "N: (" << N.x << ", " << N.y << ", " << N.z << ")\n";
+  //   std::cout << "LocalDir: (" << localDir.x << ", " << localDir.y << ", " << localDir.z << ")\n";
+  //   std::cout << "T (Before Normalization): (" << T.x << ", " << T.y << ", " << T.z << ")\n";
+  //   std::cout << "B (Before Normalization): (" << B.x << ", " << B.y << ", " << B.z << ")\n";
+  //   std::cout << "W (Before Normalization): (" << W.x << ", " << W.y << ", " << W.z << ")\n";
+  // }
+
+  // #pragma omp critical
+  // {
+  //   if (ZERO(T.length()) || ZERO(B.length())) 
+  //   {
+  //     std::cout << "T (Before Normalization): (" << T.x << ", " << T.y << ", " << T.z << ")\n";
+  //     std::cout << "T length: " << T.length() << "\n";
+  //     std::cout << "B (Before Normalization): (" << B.x << ", " << B.y << ", " << B.z << ")\n";
+  //     std::cout << "B length: " << B.length() << "\n";
+  //     std::cerr << "ERROR: One of the basis vectors is (0,0,0)!\n";
+  //     exit(1);
+  //   }
+  // }
+
+  // #pragma omp critical
+  // {
+  //   std::cout << "N: (" << N.x << ", " << N.y << ", " << N.z << ")\n";
+  //   std::cout << "LocalDir: (" << localDir.x << ", " << localDir.y << ", " << localDir.z << ")\n";
+  //   std::cout << "T (Before Normalization): (" << T.x << ", " << T.y << ", " << T.z << ")\n";
+  //   std::cout << "B (Before Normalization): (" << B.x << ", " << B.y << ", " << B.z << ")\n";
+  //   std::cout << "W (Before Normalization): (" << W.x << ", " << W.y << ", " << W.z << ")\n";
+  // }
+
+  if (std::isnan(W.x) || std::isnan(W.y) || std::isnan(W.z) ||
+      std::isinf(W.x) || std::isinf(W.y) || std::isinf(W.z)) 
+  {
+    std::cerr << "ERROR: W has invalid values! (" << W.x << ", " << W.y << ", " << W.z << ")\n";
+    exit(1);  // Forcefully stop execution to debug
+  }
+  // If I return a new fixed vector instead of W, the program does not crash,
+  // even if I'm still doing the calculation for W
+  // return Vector3D(0, 0.5, 0.5);
+  return Vector3D(W.x, W.y, W.z);
+
+  // return W;
 }
 
 // Method to render a heatmap of the indirect light
