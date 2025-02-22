@@ -35,7 +35,8 @@ Color PhongBRDF(const Material& mat,
     return light.getColor() * 
            light.getIntensity() * 
            colorMat * 
-           (kd * NL + ks * RV);
+           (kd * NL + ks * RV) / 
+           M_PI;
 }
 
 // Jim Blinn BRDF                                         
