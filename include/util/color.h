@@ -87,7 +87,7 @@ class Color
     Color() : type(RGB), r(1.0), g(1.0), b(1.0) {}
 
     // RGB Color Constructor
-    Color(float r, float g, float b)
+    Color(real r, real g, real b)
         : type(RGB), r(r), g(g), b(b) {}
 
     // Spectrum Constructor
@@ -104,6 +104,17 @@ class Color
     real getG(void);
     real getB(void);
 
+    // Intensity
+    inline real magnitude() const {
+        return sqrt(r * r + g * g + b * b);
+    }
+
+    // Perceived brightness
+    inline real luminance() const {
+        // Human eye sensitivity weights
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;  
+    }
+
     Color& operator += (const Color &c) 
     {
         r += c.r;
@@ -117,6 +128,14 @@ class Color
         g *= scalar;
         b *= scalar;
         return(*this);
+    }
+    const Color operator/(real scalar) const
+    {
+        return {
+            r / scalar,
+            g / scalar,
+            b / scalar
+        };
     }
     Color& operator /= (real scalar) 
     {
