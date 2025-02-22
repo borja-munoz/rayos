@@ -32,6 +32,7 @@ struct ProgramArgs
     Algorithm algorithm = Algorithm::WHITTED;
     int sampleRays = 1;
     int shadowRays = 1;
+    int indirectRays = 4;
 };
 
 std::string getFilename(ProgramArgs args)
@@ -127,16 +128,29 @@ std::optional<ProgramArgs> parseArgs(int argc, char* argv[])
                 return std::nullopt;
             }
         } 
+        else if (arg == "--indirect-rays") 
+        {
+            if (++i < argc) 
+            {
+                args.indirectRays = std::stoi(argv[i]);
+            } 
+            else 
+            {
+                std::cerr << "Error: Missing value for --indirect-rays\n";
+                return std::nullopt;
+            }
+        } 
         else if (arg == "--help") 
         {
             std::cout << "Usage: rayos [options]\n"
                       << "Options:\n"
-                      << "  --scene <filename>      Path to the scene file\n"
-                      << "  --no-bvh                Disable BVH acceleration\n"
-                      << "  --algorithm <type>      Rendering algorithm: w -> Whitted, s -> stochastic\n"
-                      << "  --sample-rays <count>   Number of sample rays per pixel\n"
-                      << "  --shadow-rays <count>   Number of shadow rays per light\n"
-                      << "  --help                  Show this help message\n";
+                      << "  --scene <filename>       Path to the scene file\n"
+                      << "  --no-bvh                 Disable BVH acceleration\n"
+                      << "  --algorithm <type>       Rendering algorithm: w -> Whitted, s -> stochastic\n"
+                      << "  --sample-rays <count>    Number of sample rays per pixel\n"
+                      << "  --shadow-rays <count>    Number of shadow rays per light\n"
+                      << "  --indirect-rays <count>  Number of indirect rays\n"
+                      << "  --help                   Show this help message\n";
             return std::nullopt;
         } 
         else 
@@ -175,6 +189,7 @@ int main(int argc, char *argv[])
     rt = std::make_shared<StochasticRayTracer>(
       args.sampleRays, 
       args.shadowRays,
+      args.indirectRays,
       args.useBVH);
   }
 
