@@ -4,7 +4,12 @@ project(rayos VERSION 0.1.0 LANGUAGES CXX)
 # add_subdirectory(external/pbrt-parser EXCLUDE_FROM_ALL) 
 
 set(CMAKE_CXX_FLAGS "-std=c++17")
+
+# Look for thread corruptions
 # set(CMAKE_CXX_FLAGS "-std=c++17 -fsanitize=thread")
+
+# Look for memory corruptions
+# set(CMAKE_CXX_FLAGS "-std=c++17 -fsanitize=address")
 
 # For MacOS, OpenMP should be installed with homebrew
 # and the OpenMP_ROOT must be set to the location where
