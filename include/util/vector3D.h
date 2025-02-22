@@ -83,16 +83,31 @@ class Vector3D
         }
     }
 
-    Vector3D operator-(const Vector3D otherVector) const {
+    Vector3D operator+(const Vector3D& otherVector) const 
+    {
+        return Vector3D(
+            x + otherVector.x, 
+            y + otherVector.y, 
+            z + otherVector.z
+        );
+    }
+
+    Vector3D operator-(const Vector3D& otherVector) const 
+    {
         return { 
             x - otherVector.x, 
-            y * otherVector.y, 
-            z * otherVector.z 
+            y - otherVector.y, 
+            z - otherVector.z 
         };
     }
 
-    Vector3D operator*(real scalar) const {
-        return { x * scalar, y * scalar, z * scalar };
+    Vector3D operator*(real scalar) const 
+    {
+        return Vector3D(
+            x * scalar, 
+            y * scalar, 
+            z * scalar 
+        );
     }
 
     inline real dotProduct(const Vector3D& v) const
@@ -119,7 +134,9 @@ class Vector3D
         real length;
         
         length = this->length();
-        
+        if (ZERO(length))  // Avoid division by zero
+            return;
+
         this->x /= length;
         this->y /= length;
         this->z /= length;
