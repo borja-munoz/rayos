@@ -40,6 +40,13 @@ real getRandomNumberSSE(real x, real y);
 // Thread-local random engine
 static thread_local std::mt19937 rng(std::random_device{}());
 
+inline int getRandomInt(int min, int max) {
+    static std::random_device rd;  // Seed
+    static std::mt19937 gen(rd()); // Mersenne Twister PRNG
+    std::uniform_int_distribution<int> dist(min, max);
+    return dist(gen);
+}
+
 // Inline function to remove function call overhead
 inline real getRandomNumber(real x, real y) {
     static thread_local std::uniform_real_distribution<real> dist(0.0, 1.0);
